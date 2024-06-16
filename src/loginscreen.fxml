@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.ProgressIndicator?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.effect.ColorAdjust?>
+<?import javafx.scene.effect.Glow?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.paint.Color?>
+<?import javafx.scene.paint.LinearGradient?>
+<?import javafx.scene.paint.Stop?>
+<?import javafx.scene.shape.Line?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.Text?>
+
+
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="application.Controller">
+   <children>
+      <AnchorPane fx:id="loginanchorpane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0">
+         <children>
+            <Pane opacity="0.33" prefHeight="117.0" prefWidth="600.0" style="-fx-background-color: linear-gradient(from 0.0% 0.0% to 100.0% 100.0%, #000dff 0.0%, #d71919 100.0%);" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0">
+               <effect>
+                  <Glow level="1.0" />
+               </effect>
+            </Pane>
+            <Text fx:id="passindicator" layoutY="158.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Log in with a Housaini Account " textAlignment="CENTER" wrappingWidth="601.0">
+               <font>
+                  <Font name="System Bold" size="24.0" />
+               </font>
+            </Text>
+            <ProgressIndicator fx:id="passtimeindicator" layoutX="437.0" layoutY="275.0" opacity="0.0" prefHeight="77.0" prefWidth="215.0">
+               <effect>
+                  <ColorAdjust brightness="-1.0" contrast="1.0" hue="-1.0" saturation="-1.0" />
+               </effect>
+            </ProgressIndicator>
+            <Button fx:id="createpassbutton" layoutX="167.0" layoutY="281.0" mnemonicParsing="false" onAction="#loginorcreatePassSeperate" prefHeight="33.0" prefWidth="262.0" text="Log in">
+               <font>
+                  <Font size="19.0" />
+               </font>
+            </Button>
+            <Text layoutX="234.0" layoutY="43.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Welcome to">
+               <font>
+                  <Font name="System Bold" size="22.0" />
+               </font>
+            </Text>
+            <Text layoutX="48.0" layoutY="85.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Housaini Password Manager">
+               <font>
+                  <Font name="System Bold" size="32.0" />
+               </font>
+               <fill>
+                  <LinearGradient endX="1.0" endY="1.0">
+                     <stops>
+                        <Stop>
+                           <color>
+                              <Color green="0.05000000074505806" blue="1.0" />
+                           </color>
+                        </Stop>
+                        <Stop offset="1.0">
+                           <color>
+                              <Color red="0.8421052694320679" green="0.0974658876657486" blue="0.0974658876657486" />
+                           </color>
+                        </Stop>
+                     </stops>
+                  </LinearGradient>
+               </fill>
+            </Text>
+            <TextField fx:id="housainiusername" layoutX="150.0" layoutY="180.0" prefHeight="26.0" prefWidth="299.0" promptText="Username">
+               <font>
+                  <Font name="System Bold" size="19.0" />
+               </font>
+            </TextField>
+            <Text fx:id="createacctext" fill="#6276fc" layoutY="360.0" onMouseClicked="#signuptoaccTEXT" onMouseEntered="#createacctext_ONMOUSEHOVER" onMouseExited="#createacctext_ONMOUSEEXIT" strokeType="OUTSIDE" strokeWidth="0.0" text="Create Housaini Account">
+               <font>
+                  <Font name="System Bold" size="19.0" />
+               </font>
+            </Text>
+            <Line endX="500.0" layoutX="98.0" layoutY="117.0" startX="-100.0" />
+            <PasswordField fx:id="housainipassword" layoutX="149.0" layoutY="232.0" prefHeight="40.0" prefWidth="299.0" promptText="Password">
+               <font>
+                  <Font name="System Bold" size="19.0" />
+               </font>
+            </PasswordField>
+            <Text fx:id="loginwithlocalacctext" fill="#6276fc" layoutX="329.0" layoutY="360.0" onMouseClicked="#signuptolocalaccTEXT" onMouseEntered="#createlocalacctext_ONMOUSEHOVER" onMouseExited="#createlocalacctext_ONMOUSEEXIT" strokeType="OUTSIDE" strokeWidth="0.0" text="Login with Local Account">
+               <font>
+                  <Font name="System Bold" size="19.0" />
+               </font>
+            </Text>
+            <Pane layoutY="369.0" prefHeight="33.0" prefWidth="601.0" style="-fx-background-color: #CACACA;">
+               <children>
+                  <Text fx:id="accerrorlabel" layoutX="1.0" layoutY="22.0" strokeType="OUTSIDE" strokeWidth="0.0" textAlignment="CENTER" wrappingWidth="600.0">
+                     <font>
+                        <Font size="22.0" />
+                     </font>
+                  </Text>
+               </children>
+            </Pane>
+         </children>
+      </AnchorPane>
+   </children>
+</AnchorPane>
