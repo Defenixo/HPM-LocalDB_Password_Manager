@@ -445,7 +445,7 @@ public class Controller extends EncryptionObj {
 				localaccountrs.close();
 			}
 			
-			Image settingsimageimg = new Image("/settingsicon.png");
+			/*Image settingsimageimg = new Image("/settingsicon.png");
 			settingsimagelocal.setImage(settingsimageimg);
 			settingsimageadmin.setImage(settingsimageimg);
 			
@@ -457,10 +457,10 @@ public class Controller extends EncryptionObj {
 			} else {
 				maintabpane.getTabs().remove(adminsettings);
 				maintabpane.getTabs().remove(admindbsettingstab);
-			}
+			}*/
 			
 			
-			
+			loadaccounts();
 			
 		} catch(Exception e) {
 			e.printStackTrace();
@@ -469,265 +469,146 @@ public class Controller extends EncryptionObj {
 		System.out.println("Executed");
 	}
 	
+	static ArrayList<String> tempusernames = new ArrayList<String>();
+	static ArrayList<String> tempusercolors = new ArrayList<String>();
+	static ArrayList<String> temppasswords = new ArrayList<String>();
+	
 	public void loadaccounts() {
 		
-		if(loadlocalaccounts) {
+	if(loadlocalaccounts) {
 		
+		uservbox.getChildren().clear();
+		displaycreateaccanddbadminacc();
 		ArrayList<Pane> accpanes = new ArrayList<Pane>();
-		
+							
+		//--------------------------------
+							
 		new Thread() {
-			public void run() {
-				
-							uservbox.getChildren().clear();
-							
-							boolean gray = false;
-							
-							Pane createaccpane = new Pane();
-							Text createacctext = new Text("Create Account");
-							createacctext.setFont(Font.font("Ubuntu", FontWeight.BOLD, 17));
-							createacctext.setLayoutX(55);
-							createacctext.setLayoutY(26);
-							createacctext.setVisible(true);
-							createaccpane.getChildren().add(createacctext);
-							createaccpane.setMinWidth(276);
-							ftlistENTER.add(new FadeTransition());
-							ttlistENTER.add(new TranslateTransition());
-							ftlistEXIT.add(new FadeTransition());
-							ttlistEXIT.add(new TranslateTransition());
-							createaccpane.setOnMouseEntered((event) -> {
-								TranslateTransition t_anim_OnMouseEntered = new TranslateTransition();
-								t_anim_OnMouseEntered.setNode(createaccpane);
-								t_anim_OnMouseEntered.setToX(-52);
-								t_anim_OnMouseEntered.setInterpolator(Interpolator.EASE_OUT);
-								t_anim_OnMouseEntered.setDuration(Duration.millis(100));
-								t_anim_OnMouseEntered.play();
-							});
-							createaccpane.setOnMouseExited((event) -> {
-								TranslateTransition t_anim_OnMouseExited = new TranslateTransition();
-								t_anim_OnMouseExited.setNode(createaccpane);
-								t_anim_OnMouseExited.setToX(0);
-								t_anim_OnMouseExited.setInterpolator(Interpolator.EASE_IN);
-								t_anim_OnMouseExited.setDuration(Duration.millis(100));
-								t_anim_OnMouseExited.play();
-							});
-							createaccpane.setOnMouseClicked((event) -> {
-								createpassbutton.setText("Create Account");
-								usercolorpicker.setDisable(false);
-								reqpasswordcheckbox.setSelected(true);
-								reqpasswordcheckbox.setDisable(false);
-								housainipassword.setDisable(false);
-								housainiusername.setDisable(false);
-								housainiusername.clear();
-								housainipassword.clear();
-								housainiusername.setPromptText("Username");
-								housainipassword.setPromptText("Password");
-							});
-							createaccpane.setPrefHeight(52);
-							createaccpane.setBackground(Background.fill(Color.web("#d71919", 0.33)));
-							createaccpane.setVisible(true);
-							accpanes.add(createaccpane);
-							
-							Pane adminaccpane = new Pane();
-							Text adminacctext = new Text("DB Admin");
-							adminacctext.setFont(Font.font("Ubuntu", FontWeight.BOLD, 17));
-							adminacctext.setLayoutX(55);
-							adminacctext.setLayoutY(26);
-							adminacctext.setVisible(true);
-							adminaccpane.getChildren().add(adminacctext);
-							adminaccpane.setMinWidth(276);
-							ftlistENTER.add(new FadeTransition());
-							ttlistENTER.add(new TranslateTransition());
-							ftlistEXIT.add(new FadeTransition());
-							ttlistEXIT.add(new TranslateTransition());
-							adminaccpane.setOnMouseEntered((event) -> {
-								TranslateTransition t_anim_OnMouseEntered = new TranslateTransition();
-								t_anim_OnMouseEntered.setNode(adminaccpane);
-								t_anim_OnMouseEntered.setToX(-52);
-								t_anim_OnMouseEntered.setInterpolator(Interpolator.EASE_OUT);
-								t_anim_OnMouseEntered.setDuration(Duration.millis(100));
-								t_anim_OnMouseEntered.play();
-							});
-							adminaccpane.setOnMouseExited((event) -> {
-								TranslateTransition t_anim_OnMouseExited = new TranslateTransition();
-								t_anim_OnMouseExited.setNode(adminaccpane);
-								t_anim_OnMouseExited.setToX(0);
-								t_anim_OnMouseExited.setInterpolator(Interpolator.EASE_IN);
-								t_anim_OnMouseExited.setDuration(Duration.millis(100));
-								t_anim_OnMouseExited.play();
-							});
-							adminaccpane.setOnMouseClicked((event) -> {
-								createpassbutton.setText("Admin Login");
-								usercolorpicker.setDisable(true);
-								reqpasswordcheckbox.setSelected(false);
-								reqpasswordcheckbox.setDisable(true);
-								housainipassword.setDisable(false);
-								housainiusername.setPromptText("Password");
-								housainipassword.setPromptText("Confirm password");
-								try {
-									ResultSet rs;
-									String tempstr;
-									rs = connectionstmt.executeQuery("SELECT * FROM hpmgeneralsettings WHERE primark = 1");
-									tempstr = rs.getString("adminpass"); 
-									if(tempstr != null) {
-										housainiusername.setPromptText("");
-										housainipassword.setPromptText("Password");
-										housainiusername.setDisable(true);
-									}
-								} catch (SQLException e) {
-									e.printStackTrace();
-								}
-								
-								housainiusername.clear();
-								housainipassword.clear();
-								
-								
-							});
-							adminaccpane.setPrefHeight(52);
-							adminaccpane.setBackground(Background.fill(Color.web("#4682db", 0.33)));
-							ImageView adminicon = new ImageView("/setting.png");
-							adminicon.setFitWidth(47);
-							adminicon.setFitHeight(51);
-							adminicon.setLayoutX(4);
-							adminicon.setLayoutY(2);
-							adminaccpane.getChildren().add(adminicon);
-							adminaccpane.setVisible(true);
-							accpanes.add(adminaccpane);
-							
-							//--------------------------------
-							
-							usernametexts.clear();
-							
-							try {
-								
-							ResultSet mainrs = connectionstmt.executeQuery("SELECT * FROM accinfolocal;");
-							while(mainrs.next()) {
-								
-								String usernameTEMP = mainrs.getString("username"), usercolor = mainrs.getString("usercolor");
-								
-								accpanes.add(new Pane());
-								Circle circle = new Circle();
-								usernametexts.add(new Text(usernameTEMP));
-								
-								Stop[] stops = new Stop[] {new Stop(0, Color.web(usercolor).deriveColor(1,1,1.5,1)), new Stop(1, Color.web(usercolor).deriveColor(1, 1, 0.5, 1))};
-								LinearGradient lg1 = new LinearGradient(0, 0, 1, 1, true, CycleMethod.NO_CYCLE, stops);
-								Text logintext = new Text("Log in");
-								if(mainrs.getString("password").equals(EncryptionObj.EncryptFuncHOUSAINIPASS(usernameTEMP + "684", EncryptionObj.hashKey(usernameTEMP + "123")))) {
-								logintext.setText("No Password");
-								}
-								logintext.setFont(Font.font("Ubuntu", FontWeight.BOLD,FontPosture.ITALIC, 21));
-								logintext.setOpacity(0);
-								logintext.setLayoutX(55);
-								logintext.setLayoutY(46);
-								
-								circle.setFill(lg1);
-								circle.setRadius(22);
-								circle.setTranslateX(26);
-								circle.setTranslateY(26);
-								circle.setStrokeWidth(3);
-								circle.setStroke(Color.BLACK);
-								usernametexts.get(i-2).setFont(Font.font("Ubuntu", FontWeight.BOLD, 17));
-								usernametexts.get(i-2).setTranslateX(55);
-								usernametexts.get(i-2).setTranslateY(26);
-								accpanes.get(i).getChildren().add(logintext);
-								accpanes.get(i).getChildren().add(circle);
-								accpanes.get(i).getChildren().add(usernametexts.get(i-2));
-								accpanes.get(i).setPrefWidth(224);
-								accpanes.get(i).setPrefHeight(52);
-								
-								accpanes.get(i).setBackground(Background.fill(gray ? Color.LIGHTGRAY : Color.WHITE));
-								
-								accpanes.get(i).setVisible(true);
-								
-								gray = !gray;
-								
-								ftlistENTER.add(new FadeTransition());
-								ftlistENTER.get(i).setNode(accpanes.get(i).getChildrenUnmodifiable().get(0));
-								ftlistENTER.get(i).setToValue(createaccpane.getBackground().equals(Background.fill(Color.GRAY))? 0.5 : 0.4);
-								ftlistENTER.get(i).setDuration(Duration.millis(100));
-								ttlistENTER.add(new TranslateTransition());
-								ttlistENTER.get(i).setNode(accpanes.get(i));
-								ttlistENTER.get(i).setToX(-52);
-								ttlistENTER.get(i).setInterpolator(Interpolator.EASE_OUT);
-								ttlistENTER.get(i).setDuration(Duration.millis(100));
-								
-								ftlistEXIT.add(new FadeTransition());
-								ftlistEXIT.get(i).setNode(accpanes.get(i).getChildrenUnmodifiable().get(0));
-								ftlistEXIT.get(i).setToValue(0);
-								ftlistEXIT.get(i).setDuration(Duration.millis(100));
-								ttlistEXIT.add(new TranslateTransition());
-								ttlistEXIT.get(i).setNode(accpanes.get(i));
-								ttlistEXIT.get(i).setToX(0);
-								ttlistEXIT.get(i).setInterpolator(Interpolator.EASE_IN);
-								ttlistEXIT.get(i).setDuration(Duration.millis(100));
-								
-								final int t = i;
-								
-								accpanes.get(i).setOnMouseEntered((event) -> {
-									ftlistENTER.get(t).play();
-									ttlistENTER.get(t).play();
-								});
-								
-								accpanes.get(i).setOnMouseClicked((event) -> {
-									housainipassword.clear();
-									housainiusername.setText(usernametexts.get(t-2).getText());
-									reqpasswordcheckbox.setDisable(true);
-									housainiusername.setDisable(false);
-								    createpassbutton.setText("Log in");
-								    housainiusername.setPromptText("Username");
-									housainipassword.setPromptText("Password");
-								    usercolorpicker.setDisable(true);
-								    if(logintext.getText().equals("No Password")) {
-								    	reqpasswordcheckbox.setSelected(false);
-								    	housainipassword.setDisable(true);
-								    } else {
-								    	reqpasswordcheckbox.setSelected(true);
-								    	housainipassword.setDisable(false);
-								    }
-								});
-								
-								accpanes.get(i).setOnMouseExited((event) -> {
-									ftlistEXIT.get(t).play();
-									ttlistEXIT.get(t).play();
-								});
-								
-								i++;
-								
-								//uservbox.getChildren().add(pane);
-							}
-								Platform.runLater(new Runnable() {
-									@Override
-									public void run() {
-			//changing the size of the vbox to fit all of accpanes' components
-										uservbox.getChildren().clear();
-										tempsavedaccpanes = accpanes;
-										for(Pane addPane : accpanes) {
-											uservbox.getChildren().add(addPane);
-											if(uservbox.getPrefHeight() < 52 * uservbox.getChildrenUnmodifiable().size()) 
-												uservbox.setPrefHeight(uservbox.getPrefHeight() + 52);
-										}
-										for(Node nodes : uservbox.getChildren())
-										allnodesofvbox.add(nodes);
-										i = 2;
-									}
-								});
-							
-							} catch(SQLException | NoSuchAlgorithmException | InvalidKeySpecException sqle) {
-								sqle.printStackTrace();
-							}
+		public void run() {
+		try {
+			ResultSet mainrs = connectionstmt.executeQuery("SELECT * FROM accinfolocal;");
+			while(mainrs.next()) {
+				tempusernames.add(mainrs.getString("username"));
+				tempusercolors.add(mainrs.getString("usercolor"));
+				temppasswords.add(mainrs.getString("password"));
 			}
-		}.start();
-		
-		}
-		
-		
-		/*try {
-		String thing = "TOILET", thing2, thing3;
-		thing2 = EncryptionObj.EncryptFuncHOUSAINIPASS(thing, EncryptionObj.hashKey(thing));
-		thing3 = EncryptionObj.DecryptFuncHOUSAINIPASS(thing2, EncryptionObj.hashKey(thing));
-		System.out.println(thing3);
-		} catch(Exception e) {
+			
+			boolean gray = false;
+			System.out.println("frick you " + tempusernames.size());
+											
+			for(int i = 0; i < tempusernames.size(); i++) {
+				String usercolor = tempusercolors.get(i);
+				String usernameTEMP = tempusernames.get(i);
+											
+				accpanes.add(new Pane());
+				Circle circle = new Circle();
+											
+				Stop[] stops = new Stop[] {new Stop(0, Color.web(usercolor).deriveColor(1,1,1.5,1)), new Stop(1, Color.web(usercolor).deriveColor(1, 1, 0.5, 1))};
+				LinearGradient lg1 = new LinearGradient(0, 0, 1, 1, true, CycleMethod.NO_CYCLE, stops);
+				Text logintext = new Text("Log in");
+				Text usernametext = new Text(tempusernames.get(i));
+				
+				if(temppasswords.get(i).equals(EncryptionObj.EncryptFuncHOUSAINIPASS(usernameTEMP + "684", EncryptionObj.hashKey(usernameTEMP + "123"))))
+					logintext.setText("No Password");
+				
+				logintext.setFont(Font.font("Ubuntu", FontWeight.BOLD,FontPosture.ITALIC, 21));
+				logintext.setOpacity(0);
+				logintext.setLayoutX(55);
+				logintext.setLayoutY(46);
+											
+				circle.setFill(lg1);
+				circle.setRadius(22);
+				circle.setTranslateX(26);
+				circle.setTranslateY(26);
+				circle.setStrokeWidth(3);
+				circle.setStroke(Color.BLACK);
+				
+				usernametext.setFont(Font.font("Ubuntu", FontWeight.BOLD, 17));
+				usernametext.setTranslateX(55);
+				usernametext.setTranslateY(26);
+				
+				accpanes.get(i).getChildren().add(logintext);
+				accpanes.get(i).getChildren().add(circle);
+				accpanes.get(i).getChildren().add(usernametext);
+				accpanes.get(i).setPrefWidth(224);
+				accpanes.get(i).setPrefHeight(52);
+				accpanes.get(i).setBackground(Background.fill(gray ? Color.LIGHTGRAY : Color.WHITE));
+				accpanes.get(i).setVisible(true);
+											
+				gray = !gray;
+											
+				ftlistENTER.add(new FadeTransition());
+				ftlistENTER.get(i).setNode(accpanes.get(i).getChildrenUnmodifiable().get(0));
+				ftlistENTER.get(i).setToValue(gray? 0.5 : 0.4);
+				ftlistENTER.get(i).setDuration(Duration.millis(100));
+				
+				ttlistENTER.add(new TranslateTransition());
+				ttlistENTER.get(i).setNode(accpanes.get(i));
+				ttlistENTER.get(i).setToX(-52);
+				ttlistENTER.get(i).setInterpolator(Interpolator.EASE_OUT);
+				ttlistENTER.get(i).setDuration(Duration.millis(100));
+											
+				ftlistEXIT.add(new FadeTransition());
+				ftlistEXIT.get(i).setNode(accpanes.get(i).getChildrenUnmodifiable().get(0));
+				ftlistEXIT.get(i).setToValue(0);
+				ftlistEXIT.get(i).setDuration(Duration.millis(100));
+											
+				ttlistEXIT.add(new TranslateTransition());
+				ttlistEXIT.get(i).setNode(accpanes.get(i));
+				ttlistEXIT.get(i).setToX(0);
+				ttlistEXIT.get(i).setInterpolator(Interpolator.EASE_IN);
+				ttlistEXIT.get(i).setDuration(Duration.millis(100));
+											
+				final int t = i;
+											
+				accpanes.get(i).setOnMouseEntered((event) -> {
+					ftlistENTER.get(t).play();
+					ttlistENTER.get(t).play();
+				});
+				
+				accpanes.get(i).setOnMouseExited((event) -> {
+					ftlistEXIT.get(t).play();
+					ttlistEXIT.get(t).play();
+				});
+											
+				accpanes.get(i).setOnMouseClicked((event) -> {
+					housainipassword.clear();
+					housainiusername.setText(usernametext.getText());
+					reqpasswordcheckbox.setDisable(true);
+					housainiusername.setDisable(false);
+					createpassbutton.setText("Log in");
+					housainiusername.setPromptText("Username");
+					housainipassword.setPromptText("Password");
+					usercolorpicker.setDisable(true);
+					if(logintext.getText().equals("No Password")) {
+						reqpasswordcheckbox.setSelected(false);
+						housainipassword.setDisable(true);
+					} else {
+						reqpasswordcheckbox.setSelected(true);
+						housainipassword.setDisable(false);
+					}
+				});
+											
+			}
+			
+			Platform.runLater(new Runnable() {
+			public void run() {
+				tempsavedaccpanes = accpanes;
+				for(Pane addPane : accpanes) {
+					uservbox.getChildren().add(addPane);
+					if(uservbox.getPrefHeight() < 52 * uservbox.getChildrenUnmodifiable().size()) 
+						uservbox.setPrefHeight(uservbox.getPrefHeight() + 52);
+					}
+				for(Node nodes : uservbox.getChildren()) allnodesofvbox.add(nodes);
+			}});
+				
+		} catch(SQLException | NoSuchAlgorithmException | InvalidKeySpecException e) {
 			e.printStackTrace();
-		}*/
+		}
+		}
+		}.start();
+							
+		}
 	}
 	
 	public void signuptohousainiaccTEXT() {
@@ -2130,6 +2011,7 @@ public class Controller extends EncryptionObj {
         // Optional: Delete the backup file if needed
         // Files.delete(backupDbFile);
     }
+	
 	public static String getDatabasePath(Connection conn) throws SQLException {
         String databasePath = null;
         String sql = "PRAGMA database_list";
@@ -2147,6 +2029,124 @@ public class Controller extends EncryptionObj {
         }
         
         return databasePath; 
+	}
+	
+	private void displaycreateaccanddbadminacc() {
+		ArrayList<Pane> accpanes = new ArrayList<Pane>();
+		uservbox.getChildren().clear();
+		Pane createaccpane = new Pane();
+		Text createacctext = new Text("Create Account");
+		createacctext.setFont(Font.font("Ubuntu", FontWeight.BOLD, 17));
+		createacctext.setLayoutX(55);
+		createacctext.setLayoutY(26);
+		createacctext.setVisible(true);
+		createaccpane.getChildren().add(createacctext);
+		createaccpane.setMinWidth(276);
+		ftlistENTER.add(new FadeTransition());
+		ttlistENTER.add(new TranslateTransition());
+		ftlistEXIT.add(new FadeTransition());
+		ttlistEXIT.add(new TranslateTransition());
+		createaccpane.setOnMouseEntered((event) -> {
+			TranslateTransition t_anim_OnMouseEntered = new TranslateTransition();
+			t_anim_OnMouseEntered.setNode(createaccpane);
+			t_anim_OnMouseEntered.setToX(-52);
+			t_anim_OnMouseEntered.setInterpolator(Interpolator.EASE_OUT);
+			t_anim_OnMouseEntered.setDuration(Duration.millis(100));
+			t_anim_OnMouseEntered.play();
+		});
+		createaccpane.setOnMouseExited((event) -> {
+			TranslateTransition t_anim_OnMouseExited = new TranslateTransition();
+			t_anim_OnMouseExited.setNode(createaccpane);
+			t_anim_OnMouseExited.setToX(0);
+			t_anim_OnMouseExited.setInterpolator(Interpolator.EASE_IN);
+			t_anim_OnMouseExited.setDuration(Duration.millis(100));
+			t_anim_OnMouseExited.play();
+		});
+		createaccpane.setOnMouseClicked((event) -> {
+			createpassbutton.setText("Create Account");
+			usercolorpicker.setDisable(false);
+			reqpasswordcheckbox.setSelected(true);
+			reqpasswordcheckbox.setDisable(false);
+			housainipassword.setDisable(false);
+			housainiusername.setDisable(false);
+			housainiusername.clear();
+			housainipassword.clear();
+			housainiusername.setPromptText("Username");
+			housainipassword.setPromptText("Password");
+		});
+		createaccpane.setPrefHeight(52);
+		createaccpane.setBackground(Background.fill(Color.web("#d71919", 0.33)));
+		createaccpane.setVisible(true);
+		accpanes.add(createaccpane);
+		
+		Pane adminaccpane = new Pane();
+		Text adminacctext = new Text("DB Admin");
+		adminacctext.setFont(Font.font("Ubuntu", FontWeight.BOLD, 17));
+		adminacctext.setLayoutX(55);
+		adminacctext.setLayoutY(26);
+		adminacctext.setVisible(true);
+		adminaccpane.getChildren().add(adminacctext);
+		adminaccpane.setMinWidth(276);
+		ftlistENTER.add(new FadeTransition());
+		ttlistENTER.add(new TranslateTransition());
+		ftlistEXIT.add(new FadeTransition());
+		ttlistEXIT.add(new TranslateTransition());
+		adminaccpane.setOnMouseEntered((event) -> {
+			TranslateTransition t_anim_OnMouseEntered = new TranslateTransition();
+			t_anim_OnMouseEntered.setNode(adminaccpane);
+			t_anim_OnMouseEntered.setToX(-52);
+			t_anim_OnMouseEntered.setInterpolator(Interpolator.EASE_OUT);
+			t_anim_OnMouseEntered.setDuration(Duration.millis(100));
+			t_anim_OnMouseEntered.play();
+		});
+		adminaccpane.setOnMouseExited((event) -> {
+			TranslateTransition t_anim_OnMouseExited = new TranslateTransition();
+			t_anim_OnMouseExited.setNode(adminaccpane);
+			t_anim_OnMouseExited.setToX(0);
+			t_anim_OnMouseExited.setInterpolator(Interpolator.EASE_IN);
+			t_anim_OnMouseExited.setDuration(Duration.millis(100));
+			t_anim_OnMouseExited.play();
+		});
+		adminaccpane.setOnMouseClicked((event) -> {
+			createpassbutton.setText("Admin Login");
+			usercolorpicker.setDisable(true);
+			reqpasswordcheckbox.setSelected(false);
+			reqpasswordcheckbox.setDisable(true);
+			housainipassword.setDisable(false);
+			housainiusername.setPromptText("Password");
+			housainipassword.setPromptText("Confirm password");
+			try {
+				ResultSet rs;
+				String tempstr;
+				rs = connectionstmt.executeQuery("SELECT * FROM hpmgeneralsettings WHERE primark = 1");
+				tempstr = rs.getString("adminpass"); 
+				if(tempstr != null) {
+					housainiusername.setPromptText("");
+					housainipassword.setPromptText("Password");
+					housainiusername.setDisable(true);
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+			
+			housainiusername.clear();
+			housainipassword.clear();
+			
+			
+		});
+		adminaccpane.setPrefHeight(52);
+		adminaccpane.setBackground(Background.fill(Color.web("#4682db", 0.33)));
+		ImageView adminicon = new ImageView("/setting.png");
+		adminicon.setFitWidth(47);
+		adminicon.setFitHeight(51);
+		adminicon.setLayoutX(4);
+		adminicon.setLayoutY(2);
+		adminaccpane.getChildren().add(adminicon);
+		adminaccpane.setVisible(true);
+		accpanes.add(adminaccpane);
+		
+		for(Pane addPane : accpanes)
+			uservbox.getChildren().add(addPane);
 	}
 
 }
