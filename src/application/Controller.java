@@ -460,7 +460,7 @@ public class Controller extends EncryptionObj {
 			}*/
 			
 			
-			loadaccounts();
+			
 			
 		} catch(Exception e) {
 			e.printStackTrace();
@@ -600,6 +600,9 @@ public class Controller extends EncryptionObj {
 						uservbox.setPrefHeight(uservbox.getPrefHeight() + 52);
 					}
 				for(Node nodes : uservbox.getChildren()) allnodesofvbox.add(nodes);
+				tempusernames.clear();
+				tempusercolors.clear();
+				temppasswords.clear();
 			}});
 				
 		} catch(SQLException | NoSuchAlgorithmException | InvalidKeySpecException e) {
