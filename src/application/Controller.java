@@ -415,7 +415,6 @@ public class Controller extends EncryptionObj {
 		if(!accsearch.getText().isEmpty()) {
 		ArrayList<Pane> searchedaccpanes = new ArrayList<Pane>();
 		for(Node child : tempsavedaccpanes)
-			if(tempsavedaccpanes.indexOf(child)>1)
 				if(((Text)((Pane)child).getChildren().get(2)).getText().toString().contains(accsearch.getText()))
 					searchedaccpanes.add((Pane)child);
 			
@@ -494,7 +493,6 @@ public class Controller extends EncryptionObj {
 			}
 			
 			boolean gray = false;
-			System.out.println("frick you " + tempusernames.size());
 											
 			for(int i = 0; i < tempusernames.size(); i++) {
 				String usercolor = tempusercolors.get(i);
