@@ -41,14 +41,9 @@ import java.util.Arrays;
 import javafx.animation.FadeTransition;
 import javafx.animation.FillTransition;
 import javafx.animation.Interpolator;
-import javafx.animation.KeyFrame;
-import javafx.animation.KeyValue;
 import javafx.animation.ScaleTransition;
-import javafx.animation.Timeline;
 import javafx.animation.TranslateTransition;
 import javafx.application.Platform;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
@@ -86,8 +81,6 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundFill;
-import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -118,7 +111,7 @@ public class Controller extends EncryptionObj {
 	@FXML
 	private Text errortext, servicenametext, usernametext, passwordtext, accerrorlabel, passindicator, statustext, createacctext, loginwithhousainiacctext, loginwithlocalacctext, accwarning, titlepasswordstrengthindicator, subtitlepasswordstrengthindicator, statustextadmin;
 	@FXML
-	private TextFlow passwordstrengthtextflow, settingsresulttextflow;
+	private TextFlow accountdisp, passwordstrengthtextflow, settingsresulttextflow;
 	@FXML
 	private PasswordField housainioldpassword, housainipassword, adminoldpass;
 	@FXML
@@ -150,7 +143,7 @@ public class Controller extends EncryptionObj {
 	@FXML
 	private ColorPicker usercolorpicker;
 	@FXML
-	private VBox uservbox, accountdisp;
+	private VBox uservbox;
 	@FXML
 	private ImageView settingsimagelocal, settingsimageadmin;
 	private static FileReader f;
@@ -471,9 +464,7 @@ public class Controller extends EncryptionObj {
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
-		if(loadlocalaccounts) {
 		loadaccounts();
-		}
 		System.out.println("Executed");
 	}
 	
@@ -1015,75 +1006,17 @@ public class Controller extends EncryptionObj {
 			int i = 0;
 			
 			public void run() {
-				
 			try {
 				String tablename = "accstorage";
 				if(islocalacc) tablename = "accstoragelocal";
 				ResultSet mainrs = connectionstmt.executeQuery("SELECT primark, id, servicename, username, password FROM "+tablename+" WHERE id=" + currentheldID);
-				ArrayList<Pane> panearr = new ArrayList<Pane>();
-				ArrayList<TextFlow> tfarr = new ArrayList<TextFlow>();
-				ArrayList<String> srv = new ArrayList<String>();
-				ArrayList<String> usr = new ArrayList<String>();
-				ArrayList<String> pwd = new ArrayList<String>();
-				
 				while(mainrs.next()) {
 				
-					srv.add(EncryptionObj.DecryptFunc(mainrs.getString("servicename"), temp));
-					usr.add(namestr = EncryptionObj.DecryptFunc(mainrs.getString("username"), temp));
-					pwd.add(passwordstr = EncryptionObj.DecryptFunc(mainrs.getString("password"), temp));
-					
-					
+					servicestr = EncryptionObj.DecryptFunc(mainrs.getString("servicename"), temp);
+					namestr = EncryptionObj.DecryptFunc(mainrs.getString("username"), temp);
+					passwordstr = EncryptionObj.DecryptFunc(mainrs.getString("password"), temp);
 			
-					panearr.add(new Pane());
-					panearr.get(i).setBackground(Background.fill(Color.WHITE));
-					tfarr.add(new TextFlow());
-					
-					//if(gray) panearr.get(i).setBackground(Background.fill(Color.GRAY));
-					//else panearr.get(i).setBackground(Background.fill(Color.WHITE));
-					
-					//gray = !gray;
-					
-					
-					
-					//BackgroundFill storedbgfill = panearr.get(i).getBackground().getFills().getFirst();
-					final int fin_i = i;
-					
-					panearr.get(i).setOnMouseEntered(event -> {
-						
-						ObjectProperty<Color> color = new SimpleObjectProperty<Color>((Color)panearr.get(fin_i).getBackground().getFills().getFirst().getFill());
-				        color.addListener((observable, oldValue, newValue) -> {
-				            BackgroundFill backgroundFill = new BackgroundFill(newValue, CornerRadii.EMPTY, null);
-				            panearr.get(fin_i).setBackground(new Background(backgroundFill));
-				        });
-				        
-						Timeline entertimeline = new Timeline(
-					            new KeyFrame(Duration.ZERO, new KeyValue(color, (Color)panearr.get(fin_i).getBackground().getFills().getFirst().getFill())),
-					            new KeyFrame(Duration.millis(150), new KeyValue(color, Color.LIGHTBLUE))
-					        );
-						entertimeline.setCycleCount(1);
-						entertimeline.play();
-						
-					});
-					
-					panearr.get(i).setOnMouseExited(event -> {
-						ObjectProperty<Color> color = new SimpleObjectProperty<Color>((Color)panearr.get(fin_i).getBackground().getFills().getFirst().getFill());
-				        color.addListener((observable, oldValue, newValue) -> {
-				            BackgroundFill backgroundFill = new BackgroundFill(newValue, CornerRadii.EMPTY, null);
-				            panearr.get(fin_i).setBackground(new Background(backgroundFill));
-				        });
-				        
-						Timeline exittimeline = new Timeline(
-					            new KeyFrame(Duration.ZERO, new KeyValue(color, (Color)panearr.get(fin_i).getBackground().getFills().getFirst().getFill())),
-					            new KeyFrame(Duration.millis(150), new KeyValue(color, Color.WHITE))
-					        );
-						exittimeline.setCycleCount(1);
-						exittimeline.play();
-						
-					});
-					
-					i++;
-				}
-					/*txtlist.add(new Text('\n' + servicestr + '\n'));
+					txtlist.add(new Text('\n' + servicestr + '\n'));
 					txtlist.add(new Text("Username/Email: " + namestr + '\n'));
 					txtlist.add(new Text("Password: " + passwordstr + '\n'));
 					
@@ -1145,34 +1078,13 @@ public class Controller extends EncryptionObj {
 					servicestr = ""; namestr = ""; passwordstr = "";
 		    
 			
-				}*/
-				
+				}
 		
 				Platform.runLater(new Runnable() {
 					@Override
 					public void run() {
-						//System.out.println(panearr.size());
-						
-						for(int i = 0; i < panearr.size(); i++) {
-							
-							panearr.get(i).getChildren().add(tfarr.get(i));
-							
-							tfarr.get(i).getChildren().add(new Text(srv.get(i) + '\n'));
-							tfarr.get(i).getChildren().add(new Text("Username/Email: " + usr.get(i) + '\n'));
-							tfarr.get(i).getChildren().add(new Text("Password: " + pwd.get(i)));
-							
-							((Text)tfarr.get(i).getChildren().get(0)).setFont(Font.font("Ubuntu", FontWeight.BOLD, 30));
-							((Text)tfarr.get(i).getChildren().get(0)).setUnderline(true);
-							((Text)tfarr.get(i).getChildren().get(1)).setFont(Font.font("Ubuntu", 24));
-							((Text)tfarr.get(i).getChildren().get(2)).setFont(Font.font("Ubuntu", 24));
-							
-							accountdisp.getChildren().add(panearr.get(i));
-							Line seperatorline = new Line();
-							seperatorline.setStartX(-600);
-							accountdisp.getChildren().add(seperatorline);
-							
-						}
-						/*for(int g = 0; g < txtlist.size(); g += 3) {
+				
+						for(int g = 0; g < txtlist.size(); g += 3) {
 							accountdisp.getChildren().add(txtlist.get(g));
 							accountdisp.getChildren().add(txtlist.get(g + 1));
 							accountdisp.getChildren().add(txtlist.get(g + 2));
@@ -1180,9 +1092,9 @@ public class Controller extends EncryptionObj {
 							seperatorline.setStartX(-500);
 					
 							accountdisp.getChildren().add(seperatorline);
-						}*/
+						}
 					}});
-				
+			
 				} catch(NullPointerException | SQLException | NoSuchAlgorithmException np_sql_nsa_murl_ioE) {np_sql_nsa_murl_ioE.printStackTrace();}
 			}}.start();
 	}
@@ -1982,7 +1894,6 @@ public class Controller extends EncryptionObj {
 		/*Platform.runLater(new Runnable() {
 		    @Override
 		    public void run() {*/
-		if(scenename.equals("/PasswordManagerMain.fxml")) loadlocalaccounts = false;
 		    	try {
 		    	AnchorPane root = null;
 				try{root = (AnchorPane)FXMLLoader.load(getClass().getResource(scenename));
