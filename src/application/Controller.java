@@ -56,6 +56,7 @@ import javafx.event.EventHandler;
 import javafx.event.EventType;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -73,6 +74,7 @@ import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.ScrollPane.ScrollBarPolicy;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TextField;
@@ -88,6 +90,7 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.CornerRadii;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -97,11 +100,14 @@ import javafx.scene.paint.Paint;
 import javafx.scene.paint.Stop;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
+import javafx.scene.shape.Polygon;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.shape.Shape;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
+import javafx.scene.text.TextAlignment;
 import javafx.scene.text.TextFlow;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
@@ -1020,7 +1026,7 @@ public class Controller extends EncryptionObj {
 				String tablename = "accstorage";
 				if(islocalacc) tablename = "accstoragelocal";
 				ResultSet mainrs = connectionstmt.executeQuery("SELECT primark, id, servicename, username, password FROM "+tablename+" WHERE id=" + currentheldID);
-				ArrayList<Pane> panearr = new ArrayList<Pane>();
+				ArrayList<Pane> panearr = new ArrayList<Pane>(), settingspanearray = new ArrayList<Pane>();
 				ArrayList<TextFlow> tfarr = new ArrayList<TextFlow>();
 				ArrayList<String> srv = new ArrayList<String>();
 				ArrayList<String> usr = new ArrayList<String>();
@@ -1031,8 +1037,6 @@ public class Controller extends EncryptionObj {
 					srv.add(EncryptionObj.DecryptFunc(mainrs.getString("servicename"), temp));
 					usr.add(namestr = EncryptionObj.DecryptFunc(mainrs.getString("username"), temp));
 					pwd.add(passwordstr = EncryptionObj.DecryptFunc(mainrs.getString("password"), temp));
-					
-					
 			
 					panearr.add(new Pane());
 					panearr.get(i).setBackground(Background.fill(Color.WHITE));
@@ -1050,125 +1054,125 @@ public class Controller extends EncryptionObj {
 					
 					panearr.get(i).setOnMouseEntered(event -> {
 						
-						ObjectProperty<Color> color = new SimpleObjectProperty<Color>((Color)panearr.get(fin_i).getBackground().getFills().getFirst().getFill());
-				        color.addListener((observable, oldValue, newValue) -> {
-				            BackgroundFill backgroundFill = new BackgroundFill(newValue, CornerRadii.EMPTY, null);
-				            panearr.get(fin_i).setBackground(new Background(backgroundFill));
-				        });
-				        
-						Timeline entertimeline = new Timeline(
-					            new KeyFrame(Duration.ZERO, new KeyValue(color, (Color)panearr.get(fin_i).getBackground().getFills().getFirst().getFill())),
-					            new KeyFrame(Duration.millis(150), new KeyValue(color, Color.LIGHTBLUE))
-					        );
-						entertimeline.setCycleCount(1);
-						entertimeline.play();
+						
 						
 					});
 					
 					panearr.get(i).setOnMouseExited(event -> {
-						ObjectProperty<Color> color = new SimpleObjectProperty<Color>((Color)panearr.get(fin_i).getBackground().getFills().getFirst().getFill());
-				        color.addListener((observable, oldValue, newValue) -> {
-				            BackgroundFill backgroundFill = new BackgroundFill(newValue, CornerRadii.EMPTY, null);
-				            panearr.get(fin_i).setBackground(new Background(backgroundFill));
-				        });
-				        
-						Timeline exittimeline = new Timeline(
-					            new KeyFrame(Duration.ZERO, new KeyValue(color, (Color)panearr.get(fin_i).getBackground().getFills().getFirst().getFill())),
-					            new KeyFrame(Duration.millis(150), new KeyValue(color, Color.WHITE))
-					        );
-						exittimeline.setCycleCount(1);
-						exittimeline.play();
+						
 						
 					});
 					
 					i++;
 				}
-					/*txtlist.add(new Text('\n' + servicestr + '\n'));
-					txtlist.add(new Text("Username/Email: " + namestr + '\n'));
-					txtlist.add(new Text("Password: " + passwordstr + '\n'));
-					
-					txtlist.get(i).setFont(Font.font("Ubuntu", FontWeight.BOLD, 30));
-					txtlist.get(i).setUnderline(true);
-					txtlist.get(i + 1).setFont(Font.font("Ubuntu", 24));
-					txtlist.get(i + 2).setFont(Font.font("Ubuntu", 24));
-					
-					if(usersettings.charAt(0) == '1') txtlist.get(i + 2).setFill(Color.WHITE);
-					final int finI = i;
-					txtlist.get(i).setOnMouseEntered((event) -> {txtlist.get(finI).setFill(Color.AQUAMARINE);});
-					txtlist.get(i).setOnMouseClicked((event) -> {
-		    	
-						accountselc.setValue(accountselc.getItems().get(finI/3));
-						animateboop(accwarning);
-						Text ttemp = new Text();
-						
-						//gets any text child object that is purple and sets it to white
-						for(Node childnode : accountdisp.getChildren()) {
-							if(childnode.getClass().equals(Text.class) && (ttemp = (Text)childnode).getFill().equals(Color.PURPLE))
-								ttemp.setFill(Color.WHITE);
-						}
-		    	
-						(new Thread() {
-							public void run() {
-								String tempstr = "";
-								
-								Paint tempcolor = accwarning.getFill();
-								accwarning.setFill(Color.BLUE);
-								accwarning.setText("Account has been selected!");
-								
-								if(usersettings.charAt(0) == '1') {
-									Text t = (Text) accountdisp.getChildren().get((accountselc.getItems().indexOf(accountselc.getValue()) + 1)*3 + accountselc.getItems().indexOf(accountselc.getValue()));
-						
-									t.setFill(Color.PURPLE); //else t.setFill(Color.WHITE);
-									t.setOnMouseClicked((event) -> t.setFill(Color.WHITE));
-								}
-								try {sleep(3000);} catch (InterruptedException e) {e.printStackTrace();}
-								accwarning.setFill(tempcolor);
-								accwarning.setText(tempstr);
-							}
-						}).start();
-					});
-					txtlist.get(i).setOnMouseExited((event) -> {
-						txtlist.get(finI).setFill(Color.BLACK);
-					});
-		    
-					accountselc.getItems().add(servicestr + ": " + namestr);
-		    
-					if(!passwordlist.contains(passwordstr)) {
-						passwordlist.add(passwordstr);
-					} else {
-						if(accwarning.getText().isEmpty()) accwarning.setText("password: " + passwordstr + " is used multiple times!");
-						else accwarning.setText(accwarning.getText().replaceAll(": ", "s: " + passwordstr + ", ").replaceAll(" is used multiple times!", " are used multiple times!"));
-							passwordlist.add(passwordstr);
-					}
-				
-					i = i + 3;
-					servicestr = ""; namestr = ""; passwordstr = "";
-		    
-			
-				}*/
-				
-		
-				Platform.runLater(new Runnable() {
-					@Override
-					public void run() {
-						//System.out.println(panearr.size());
+				Platform.runLater(() -> {
+						System.out.println(panearr.size());
+						scrollpanewithtextf.setHbarPolicy(ScrollBarPolicy.NEVER);
 						
 						for(int i = 0; i < panearr.size(); i++) {
 							
 							panearr.get(i).getChildren().add(tfarr.get(i));
 							
 							tfarr.get(i).getChildren().add(new Text(srv.get(i) + '\n'));
-							tfarr.get(i).getChildren().add(new Text("Username/Email: " + usr.get(i) + '\n'));
-							tfarr.get(i).getChildren().add(new Text("Password: " + pwd.get(i)));
-							
 							((Text)tfarr.get(i).getChildren().get(0)).setFont(Font.font("Ubuntu", FontWeight.BOLD, 30));
 							((Text)tfarr.get(i).getChildren().get(0)).setUnderline(true);
+							tfarr.get(i).getChildren().add(new Text(usr.get(i) + '\n'));
 							((Text)tfarr.get(i).getChildren().get(1)).setFont(Font.font("Ubuntu", 24));
+							tfarr.get(i).getChildren().add(new Text(pwd.get(i)));
 							((Text)tfarr.get(i).getChildren().get(2)).setFont(Font.font("Ubuntu", 24));
+							
+							VBox layered = new VBox(); 
+							
+							HBox temphb = new HBox();
+							temphb.setSpacing(36);
+							//temphb.setBackground(Background.fill(Color.color(255/184, 255/226, 255/250, 0.6)));
+							temphb.setOpacity(60);
+							temphb.setPrefWidth(100);
+							layered.getChildren().add(temphb);
+							layered.getChildren().add(new TextFlow());
+							((TextFlow)layered.getChildren().get(1)).getChildren().add(new Text());
+							Text iconinfo = (Text)((TextFlow)layered.getChildren().get(1)).getChildren().get(0);
+							((TextFlow)layered.getChildren().get(1)).setTextAlignment(TextAlignment.CENTER);
+							((TextFlow)layered.getChildren().get(1)).setPrefWidth(150);
+							//iconinfo.setTranslateX(25);
+							
+							temphb.getChildren().add(new ImageView()); ImageView tempB1 = ((ImageView)temphb.getChildren().get(0));
+							tempB1.setImage(new Image("edit.png"));
+							tempB1.setFitWidth(25);
+							tempB1.setFitHeight(25);
+							tempB1.setOnMouseEntered(event -> {
+								iconinfo.setText("Change info");
+							});
+							
+							temphb.getChildren().add(new ImageView()); ImageView tempB2 = ((ImageView)temphb.getChildren().get(1));
+							tempB2.setImage(new Image("bin.png"));
+							tempB2.setFitWidth(25);
+							tempB2.setFitHeight(25);
+							tempB2.setOnMouseEntered(event -> {
+								iconinfo.setText("Delete account info");
+							});
+							
+							temphb.getChildren().add(new ImageView()); ImageView tempB3 = ((ImageView)temphb.getChildren().get(2));
+							tempB3.setImage(new Image("show.png"));
+							tempB3.setFitWidth(25);
+							tempB3.setFitHeight(25);
+							tempB3.setOnMouseEntered(event -> {
+								iconinfo.setText("Show password");
+							});
+							
+							panearr.get(i).getChildren().add(layered);
+							
+							layered.setTranslateX(600);
+							
+							//temphb.setLayoutX(600);
+							
+							final int f = i;
+							panearr.get(i).setOnMouseEntered(event -> {
+								ObjectProperty<Color> color = new SimpleObjectProperty<Color>((Color)panearr.get(f).getBackground().getFills().getFirst().getFill());
+						        color.addListener((observable, oldValue, newValue) -> {
+						            BackgroundFill backgroundFill = new BackgroundFill(newValue, CornerRadii.EMPTY, null);
+						            panearr.get(f).setBackground(new Background(backgroundFill));
+						        });
+						        
+								Timeline entertimeline = new Timeline(
+							            new KeyFrame(Duration.ZERO, new KeyValue(color, (Color)panearr.get(f).getBackground().getFills().getFirst().getFill())),
+							            new KeyFrame(Duration.millis(150), new KeyValue(color, Color.LIGHTBLUE))
+							        );
+								entertimeline.setCycleCount(1);
+								entertimeline.play();
+								
+								TranslateTransition tt = new TranslateTransition();
+								tt.setNode(layered);
+								tt.setToX(450);
+								tt.setDuration(Duration.millis(120));
+								tt.play();
+							});
+							
+							panearr.get(i).setOnMouseExited(event -> {
+								
+								ObjectProperty<Color> color = new SimpleObjectProperty<Color>((Color)panearr.get(f).getBackground().getFills().getFirst().getFill());
+						        color.addListener((observable, oldValue, newValue) -> {
+						            BackgroundFill backgroundFill = new BackgroundFill(newValue, CornerRadii.EMPTY, null);
+						            panearr.get(f).setBackground(new Background(backgroundFill));
+						        });
+						        
+								Timeline exittimeline = new Timeline(
+							            new KeyFrame(Duration.ZERO, new KeyValue(color, (Color)panearr.get(f).getBackground().getFills().getFirst().getFill())),
+							            new KeyFrame(Duration.millis(150), new KeyValue(color, Color.WHITE))
+							        );
+								exittimeline.setCycleCount(1);
+								exittimeline.play();
+								
+								TranslateTransition to = new TranslateTransition();
+								to.setNode(layered);
+								to.setToX(600);
+								to.setDuration(Duration.millis(120));
+								to.play();
+							});
 							
 							accountdisp.getChildren().add(panearr.get(i));
 							Line seperatorline = new Line();
-							seperatorline.setStartX(-600);
+							seperatorline.setStartX(-670);
 							accountdisp.getChildren().add(seperatorline);
 							
 						}
@@ -1181,11 +1185,12 @@ public class Controller extends EncryptionObj {
 					
 							accountdisp.getChildren().add(seperatorline);
 						}*/
-					}});
+				});
 				
 				} catch(NullPointerException | SQLException | NoSuchAlgorithmException np_sql_nsa_murl_ioE) {np_sql_nsa_murl_ioE.printStackTrace();}
 			}}.start();
 	}
+	
 	
 	//deletes the contents of the vbox belonging to the "Stored Accounts" tab upon closing
 	public void deletetextfromdisp() {
