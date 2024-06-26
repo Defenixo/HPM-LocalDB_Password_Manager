@@ -56,6 +56,7 @@ import javafx.event.EventHandler;
 import javafx.event.EventType;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.Parent;
@@ -82,9 +83,16 @@ import javafx.scene.control.TextInputDialog;
 import javafx.scene.control.Tooltip;
 import javafx.scene.effect.Blend;
 import javafx.scene.effect.BlendMode;
+import javafx.scene.effect.Bloom;
 import javafx.scene.effect.ColorInput;
+import javafx.scene.effect.Effect;
+import javafx.scene.effect.Glow;
+import javafx.scene.effect.Light.Distant;
+import javafx.scene.effect.Lighting;
+import javafx.scene.effect.Shadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.image.PixelReader;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Background;
@@ -92,6 +100,8 @@ import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.CycleMethod;
@@ -1042,29 +1052,9 @@ public class Controller extends EncryptionObj {
 					panearr.get(i).setBackground(Background.fill(Color.WHITE));
 					tfarr.add(new TextFlow());
 					
-					//if(gray) panearr.get(i).setBackground(Background.fill(Color.GRAY));
-					//else panearr.get(i).setBackground(Background.fill(Color.WHITE));
-					
-					//gray = !gray;
-					
-					
-					
-					//BackgroundFill storedbgfill = panearr.get(i).getBackground().getFills().getFirst();
-					final int fin_i = i;
-					
-					panearr.get(i).setOnMouseEntered(event -> {
-						
-						
-						
-					});
-					
-					panearr.get(i).setOnMouseExited(event -> {
-						
-						
-					});
-					
 					i++;
 				}
+				
 				Platform.runLater(() -> {
 						System.out.println(panearr.size());
 						scrollpanewithtextf.setHbarPolicy(ScrollBarPolicy.NEVER);
@@ -1092,35 +1082,184 @@ public class Controller extends EncryptionObj {
 							layered.getChildren().add(new TextFlow());
 							((TextFlow)layered.getChildren().get(1)).getChildren().add(new Text());
 							Text iconinfo = (Text)((TextFlow)layered.getChildren().get(1)).getChildren().get(0);
+							iconinfo.setFont(Font.font("Ubuntu", FontWeight.BOLD, 14));
+							iconinfo.setFill(new Color(0.1399999976158142, 0.3538853287696838, 0.5, 1.0));
+							Glow b = new Glow();
+							b.setLevel(0.5);
+							iconinfo.setEffect(b);
 							((TextFlow)layered.getChildren().get(1)).setTextAlignment(TextAlignment.CENTER);
 							((TextFlow)layered.getChildren().get(1)).setPrefWidth(150);
 							//iconinfo.setTranslateX(25);
 							
-							temphb.getChildren().add(new ImageView()); ImageView tempB1 = ((ImageView)temphb.getChildren().get(0));
-							tempB1.setImage(new Image("edit.png"));
-							tempB1.setFitWidth(25);
-							tempB1.setFitHeight(25);
-							tempB1.setOnMouseEntered(event -> {
-								iconinfo.setText("Change info");
-							});
+					        Distant light1 = new Distant();
+					        light1.setAzimuth(116.16);
+					        light1.setElevation(124.53);
+					        light1.setColor(new Color(0.4399999976158142, 0.7538853287696838, 1.0, 1.0));
+					        
+					        Lighting lighting1 = new Lighting();
+					        lighting1.setDiffuseConstant(2.0);
+					        lighting1.setSpecularConstant(0.6);
+					        lighting1.setSpecularExponent(11.16);
+					        lighting1.setSurfaceScale(2.2);
+					        lighting1.setLight(light1);
+					        lighting1.setBumpInput(new Shadow());
+					        
+					        Distant light2 = new Distant();
+					        light2.setAzimuth(116.16);
+					        light2.setElevation(124.53);
+					        light2.setColor(new Color(0.4399999976158142, 0.7538853287696838, 1.0, 1.0));
+					        
+					        Lighting lighting2 = new Lighting();
+					        lighting2.setDiffuseConstant(2.0);
+					        lighting2.setSpecularConstant(0.6);
+					        lighting2.setSpecularExponent(11.16);
+					        lighting2.setSurfaceScale(2.2);
+					        lighting2.setLight(light2);
+					        lighting2.setBumpInput(new Shadow());
+					        
+					        Distant light3 = new Distant();
+					        light3.setAzimuth(116.16);
+					        light3.setElevation(124.53);
+					        light3.setColor(new Color(0.4399999976158142, 0.7538853287696838, 1.0, 1.0));
+					        
+					        Lighting lighting3 = new Lighting();
+					        lighting3.setDiffuseConstant(2.0);
+					        lighting3.setSpecularConstant(0.6);
+					        lighting3.setSpecularExponent(11.16);
+					        lighting3.setSurfaceScale(2.2);
+					        lighting3.setLight(light3);
+					        lighting3.setBumpInput(new Shadow());
+					        
+					        Distant light4 = new Distant();
+					        light3.setAzimuth(116.16);
+					        light3.setElevation(124.53);
+					        light3.setColor(new Color(0.4399999976158142, 0.7538853287696838, 1.0, 1.0));
+					        
+					        Lighting lighting4 = new Lighting();
+					        lighting3.setDiffuseConstant(2.0);
+					        lighting3.setSpecularConstant(0.6);
+					        lighting3.setSpecularExponent(11.16);
+					        lighting3.setSurfaceScale(2.2);
+					        lighting3.setLight(light4);
+					        lighting3.setBumpInput(new Shadow());
 							
-							temphb.getChildren().add(new ImageView()); ImageView tempB2 = ((ImageView)temphb.getChildren().get(1));
-							tempB2.setImage(new Image("bin.png"));
-							tempB2.setFitWidth(25);
-							tempB2.setFitHeight(25);
-							tempB2.setOnMouseEntered(event -> {
-								iconinfo.setText("Delete account info");
-							});
-							
-							temphb.getChildren().add(new ImageView()); ImageView tempB3 = ((ImageView)temphb.getChildren().get(2));
-							tempB3.setImage(new Image("show.png"));
-							tempB3.setFitWidth(25);
-							tempB3.setFitHeight(25);
-							tempB3.setOnMouseEntered(event -> {
-								iconinfo.setText("Show password");
-							});
+					        temphb.getChildren().add(new ImageView()); 
+					        ImageView tempB1 = new ImageView();
+					        Rectangle overlay1 = new Rectangle(25, 25);
+					        overlay1.setFill(Color.TRANSPARENT);
+
+					        tempB1.setImage(new Image("edit.png"));
+					        tempB1.setPreserveRatio(true);
+					        tempB1.setFitWidth(25);
+					        tempB1.setFitHeight(25);
+					        tempB1.setEffect(lighting1);
+
+					        overlay1.setOnMouseEntered(event -> {
+					        	
+					            ScaleTransition sc = new ScaleTransition();
+					            sc.setNode(tempB1);
+					            sc.setToX(1.3);
+					            sc.setToY(1.3);
+					            sc.setInterpolator(Interpolator.EASE_BOTH);
+					            sc.setDuration(Duration.millis(200));
+					            sc.play();
+					            iconinfo.setText("Change info");
+					        });
+
+					        overlay1.setOnMouseExited(event -> {
+					            ScaleTransition sc = new ScaleTransition();
+					            sc.setNode(tempB1);
+					            sc.setToX(1);
+					            sc.setToY(1);
+					            sc.setInterpolator(Interpolator.EASE_BOTH);
+					            sc.setDuration(Duration.millis(200));
+					            sc.play();
+					            iconinfo.setText("");
+					        });
+
+					        StackPane stackPane1 = new StackPane();
+					        stackPane1.getChildren().addAll(tempB1, overlay1);
+					        temphb.getChildren().set(0, stackPane1);
+
+					        ImageView tempB2 = new ImageView();
+					        Rectangle overlay2 = new Rectangle(25, 25);
+					        overlay2.setFill(Color.TRANSPARENT);
+
+					        tempB2.setImage(new Image("bin.png"));
+					        tempB2.setPreserveRatio(true);
+					        tempB2.setFitWidth(25);
+					        tempB2.setFitHeight(25);
+					        tempB2.setEffect(lighting2);
+
+					        overlay2.setOnMouseEntered(event -> {
+					            ScaleTransition sc = new ScaleTransition();
+					            sc.setNode(tempB2);
+					            sc.setToX(1.3);
+					            sc.setToY(1.3);
+					            sc.setInterpolator(Interpolator.EASE_BOTH);
+					            sc.setDuration(Duration.millis(200));
+					            sc.play();
+					            iconinfo.setText("Delete account info");
+					        });
+
+					        overlay2.setOnMouseExited(event -> {
+					            ScaleTransition sc = new ScaleTransition();
+					            sc.setNode(tempB2);
+					            sc.setToX(1);
+					            sc.setToY(1);
+					            sc.setInterpolator(Interpolator.EASE_BOTH);
+					            sc.setDuration(Duration.millis(200));
+					            sc.play();
+					            iconinfo.setText("");
+					        });
+
+					        StackPane stackPane2 = new StackPane();
+					        stackPane2.getChildren().addAll(tempB2, overlay2);
+					        temphb.getChildren().add(stackPane2);
+
+					        ImageView tempB3 = new ImageView();
+					        Rectangle overlay3 = new Rectangle(25, 25);
+					        overlay3.setFill(Color.TRANSPARENT);
+
+					        tempB3.setImage(new Image("show.png"));
+					        tempB3.setPreserveRatio(true);
+					        tempB3.setFitWidth(25);
+					        tempB3.setFitHeight(25);
+					        tempB3.setEffect(lighting3);
+
+					        overlay3.setOnMouseEntered(event -> {
+					            ScaleTransition sc = new ScaleTransition();
+					            sc.setNode(tempB3);
+					            sc.setToX(1.3);
+					            sc.setToY(1.3);
+					            sc.setInterpolator(Interpolator.EASE_BOTH);
+					            sc.setDuration(Duration.millis(200));
+					            sc.play();
+					            iconinfo.setText("Show password");
+					        });
+
+					        overlay3.setOnMouseExited(event -> {
+					            ScaleTransition sc = new ScaleTransition();
+					            sc.setNode(tempB3);
+					            sc.setToX(1);
+					            sc.setToY(1);
+					            sc.setInterpolator(Interpolator.EASE_BOTH);
+					            sc.setDuration(Duration.millis(200));
+					            sc.play();
+					            iconinfo.setText("");
+					        });
+
+					        StackPane stackPane3 = new StackPane();
+					        stackPane3.getChildren().addAll(tempB3, overlay3);
+					        temphb.getChildren().add(stackPane3);
 							
 							panearr.get(i).getChildren().add(layered);
+							
+							panearr.get(i).setOnMouseMoved(event -> {
+					            light1.setAzimuth(Math.toDegrees(calculateAngle(tempB1, event)) + 180);
+					            light2.setAzimuth(Math.toDegrees(calculateAngle(tempB2, event)) + 180);
+					            light3.setAzimuth(Math.toDegrees(calculateAngle(tempB3, event)) + 180);
+							});
 							
 							layered.setTranslateX(600);
 							
@@ -1190,8 +1329,7 @@ public class Controller extends EncryptionObj {
 				} catch(NullPointerException | SQLException | NoSuchAlgorithmException np_sql_nsa_murl_ioE) {np_sql_nsa_murl_ioE.printStackTrace();}
 			}}.start();
 	}
-	
-	
+		
 	//deletes the contents of the vbox belonging to the "Stored Accounts" tab upon closing
 	public void deletetextfromdisp() {
 		accountdisp.getChildren().clear();
@@ -2243,7 +2381,48 @@ public class Controller extends EncryptionObj {
 		for(Pane addPane : accpanes)
 			uservbox.getChildren().add(addPane);
 	}
+	
+	private double calculateAngle(Pane node, MouseEvent event) {
+        // Get the center coordinates of the VBox
+        double centerX = node.getLayoutX() + node.getTranslateX() + node.getWidth() / 2.0;
+        double centerY = node.getLayoutY() + node.getTranslateY() + node.getHeight() / 2.0;
 
+        // Get the mouse coordinates
+        double mouseX = event.getX();
+        double mouseY = event.getY();
+
+        // Calculate the difference in coordinates
+        double deltaX = mouseX - centerX;
+        double deltaY = mouseY - centerY;
+        
+        Line line = new Line();
+        line.setStartX(mouseX);
+        line.setStartY(mouseY);
+        line.setEndX(deltaX);
+        line.setEndY(deltaY);
+        mainanchorpane.getChildren().add(line);
+
+        // Calculate the angle using Math.atan2
+        return Math.atan2(deltaY, deltaX);
+    }
+	
+	private double calculateAngle(Node node, MouseEvent event) {
+	    // Get the center coordinates of the Node
+	    Bounds bounds = node.localToScene(node.getBoundsInLocal());
+	    double centerX = bounds.getMinX() + bounds.getWidth() / 2.0;
+	    double centerY = bounds.getMinY() + bounds.getHeight() / 2.0;
+
+	    // Get the mouse coordinates relative to the scene
+	    double mouseX = event.getSceneX();
+	    double mouseY = event.getSceneY();
+
+	    // Calculate the difference in coordinates
+	    double deltaX = mouseX - centerX;
+	    double deltaY = mouseY - centerY;
+
+	    // Calculate the angle using Math.atan2
+	    return Math.atan2(deltaY, deltaX);
+	}
 }
 
 /*
