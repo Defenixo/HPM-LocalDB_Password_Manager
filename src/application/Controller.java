@@ -86,6 +86,7 @@ import javafx.scene.effect.BlendMode;
 import javafx.scene.effect.Bloom;
 import javafx.scene.effect.ColorInput;
 import javafx.scene.effect.Effect;
+import javafx.scene.effect.GaussianBlur;
 import javafx.scene.effect.Glow;
 import javafx.scene.effect.Light.Distant;
 import javafx.scene.effect.Lighting;
@@ -93,6 +94,7 @@ import javafx.scene.effect.Shadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.PixelReader;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Background;
@@ -132,19 +134,19 @@ public class Controller extends EncryptionObj {
 	@FXML
 	private TextField servicenamefield, usernamefield, usernamefield1, passwordfield, passwordfield1, housaininewpassword, passwordstrengthtextfield, housainiusername, accsearch, adminnewpass;
 	@FXML
-	private Text errortext, servicenametext, usernametext, passwordtext, accerrorlabel, passindicator, statustext, createacctext, loginwithhousainiacctext, loginwithlocalacctext, accwarning, titlepasswordstrengthindicator, subtitlepasswordstrengthindicator, statustextadmin;
+	private Text errortext, servicenametext, usernametext, passwordtext, accerrorlabel, passindicator, statustext, createacctext, loginwithhousainiacctext, loginwithlocalacctext, accwarning, titlepasswordstrengthindicator, subtitlepasswordstrengthindicator, statustextadmin, changeinfoofacctext;
 	@FXML
 	private TextFlow passwordstrengthtextflow, settingsresulttextflow;
 	@FXML
 	private PasswordField housainioldpassword, housainipassword, adminoldpass;
 	@FXML
-	private Button createpassbutton, addaccbutton, changeusername, delaccbutton, applysettingsbutton, adminpassbutton;
+	private Button createpassbutton, addaccbutton, changeusername, delaccbutton, applysettingsbutton, adminpassbutton, AddAccbutton1;
 	@FXML
 	private ProgressIndicator passtimeindicator;
 	@FXML
-	private AnchorPane passanchorpane, loginanchorpane, mainanchorpane;
+	private AnchorPane passanchorpane, loginanchorpane, mainanchorpane, storedaccountsanchorpane;
 	@FXML
-	private Pane buttoncont, passwordstrengthpane, housainiaccountsettingspane, createaccountoptionspane, acclistpane;
+	private Pane buttoncont, passwordstrengthpane, housainiaccountsettingspane, createaccountoptionspane, acclistpane, changeaccountinfopane;
 	@FXML
 	private ChoiceBox accountselc, resolutionselc;
 	@FXML
@@ -176,7 +178,7 @@ public class Controller extends EncryptionObj {
 	private static boolean loadlocalaccounts = false, islocalacc = false, reqpass, isadmin = false;
 	Font orgfont;
 	public static String currentusername;
-	public static int currentheldID, currentpreviousmonth, i = 2;
+	public static int currentheldID, currentpreviousmonth, i = 2, straccprimarktochange;
 	private static String servicestr = "", namestr = "", passwordstr = "", usersettings, useroptions, temp, temp2;
 	private static List<Text> txtlist = new ArrayList<Text>();
 	private static List<String> passwordlist = new ArrayList<String>();
@@ -451,8 +453,6 @@ public class Controller extends EncryptionObj {
 
 	@FXML
 	public void initialize() {
-		//loginanchorpane.setScaleX(2);
-		//loginanchorpane.setScaleY(2);
 		try {
 			if(islocalacc) {
 				connectionatt.close();
@@ -467,22 +467,19 @@ public class Controller extends EncryptionObj {
 				localaccountrs.close();
 			}
 			
-			/*Image settingsimageimg = new Image("/settingsicon.png");
-			settingsimagelocal.setImage(settingsimageimg);
-			settingsimageadmin.setImage(settingsimageimg);
+			settingsimagelocal.setImage(new Image("settingsicon.png"));
+			settingsimageadmin.setImage(new Image("settingsicon.png"));
 			
-			if(isadmin) {
-				maintabpane.getTabs().remove(addacctab);
-				maintabpane.getTabs().remove(showacctab);
-				maintabpane.getTabs().remove(passstrtab);
-				maintabpane.getTabs().remove(accsettings);
+			System.out.println(isadmin);
+			if(!isadmin) {
+				maintabpane.getTabs().remove(5);
+				maintabpane.getTabs().remove(3);
 			} else {
-				maintabpane.getTabs().remove(adminsettings);
-				maintabpane.getTabs().remove(admindbsettingstab);
-			}*/
-			
-			
-			
+				maintabpane.getTabs().remove(4);
+				maintabpane.getTabs().remove(2);
+				maintabpane.getTabs().remove(1);
+				maintabpane.getTabs().remove(0);
+			}
 			
 		} catch(Exception e) {
 			e.printStackTrace();
@@ -1020,11 +1017,6 @@ public class Controller extends EncryptionObj {
 		accountdisp.getChildren().clear();
 		accountselc.getItems().clear();
 		accountdisp.setStyle("-fx-background-color: #ffffff");
-			
-		Text announcetext = new Text("Select an Account by Left Clicking on the Service Name" + '\n');
-		announcetext.setFill(Color.web("#186f0f"));
-		announcetext.setFont(Font.font("Ubuntu", FontWeight.BOLD, 18));
-		accountdisp.getChildren().add(announcetext);
 		
 		new Thread() {
 			
@@ -1036,7 +1028,7 @@ public class Controller extends EncryptionObj {
 				String tablename = "accstorage";
 				if(islocalacc) tablename = "accstoragelocal";
 				ResultSet mainrs = connectionstmt.executeQuery("SELECT primark, id, servicename, username, password FROM "+tablename+" WHERE id=" + currentheldID);
-				ArrayList<Pane> panearr = new ArrayList<Pane>(), settingspanearray = new ArrayList<Pane>();
+				ArrayList<Pane> panearr = new ArrayList<Pane>();
 				ArrayList<TextFlow> tfarr = new ArrayList<TextFlow>();
 				ArrayList<String> srv = new ArrayList<String>();
 				ArrayList<String> usr = new ArrayList<String>();
@@ -1058,11 +1050,13 @@ public class Controller extends EncryptionObj {
 				Platform.runLater(() -> {
 						System.out.println(panearr.size());
 						scrollpanewithtextf.setHbarPolicy(ScrollBarPolicy.NEVER);
+						boolean showpass = usersettings.charAt(0) == '1' ? false : true;
 						
 						for(int i = 0; i < panearr.size(); i++) {
 							
-							panearr.get(i).getChildren().add(tfarr.get(i));
+							final int f = i;
 							
+							panearr.get(i).getChildren().add(tfarr.get(i));
 							tfarr.get(i).getChildren().add(new Text(srv.get(i) + '\n'));
 							((Text)tfarr.get(i).getChildren().get(0)).setFont(Font.font("Ubuntu", FontWeight.BOLD, 30));
 							((Text)tfarr.get(i).getChildren().get(0)).setUnderline(true);
@@ -1070,16 +1064,15 @@ public class Controller extends EncryptionObj {
 							((Text)tfarr.get(i).getChildren().get(1)).setFont(Font.font("Ubuntu", 24));
 							tfarr.get(i).getChildren().add(new Text(pwd.get(i)));
 							((Text)tfarr.get(i).getChildren().get(2)).setFont(Font.font("Ubuntu", 24));
+							if(!showpass) ((Text)tfarr.get(i).getChildren().get(2)).setVisible(false);
 							
-							VBox layered = new VBox(); 
+							//creating the HBox that will hold the three icons for: editing, deleting, and showing/hiding passwords
+							HBox temphb = new HBox(); temphb.setSpacing(36); temphb.setOpacity(60); temphb.setPrefWidth(100);
 							
-							HBox temphb = new HBox();
-							temphb.setSpacing(36);
-							//temphb.setBackground(Background.fill(Color.color(255/184, 255/226, 255/250, 0.6)));
-							temphb.setOpacity(60);
-							temphb.setPrefWidth(100);
-							layered.getChildren().add(temphb);
-							layered.getChildren().add(new TextFlow());
+							//creating the VBox that will hold the previous HBox and a Text explaining what each icon does
+							VBox layered = new VBox(); layered.getChildren().add(temphb); layered.getChildren().add(new TextFlow());
+							
+							//creating the text that will explain the icons
 							((TextFlow)layered.getChildren().get(1)).getChildren().add(new Text());
 							Text iconinfo = (Text)((TextFlow)layered.getChildren().get(1)).getChildren().get(0);
 							iconinfo.setFont(Font.font("Ubuntu", FontWeight.BOLD, 14));
@@ -1089,170 +1082,193 @@ public class Controller extends EncryptionObj {
 							iconinfo.setEffect(b);
 							((TextFlow)layered.getChildren().get(1)).setTextAlignment(TextAlignment.CENTER);
 							((TextFlow)layered.getChildren().get(1)).setPrefWidth(150);
-							//iconinfo.setTranslateX(25);
 							
-					        Distant light1 = new Distant();
-					        light1.setAzimuth(116.16);
-					        light1.setElevation(124.53);
-					        light1.setColor(new Color(0.4399999976158142, 0.7538853287696838, 1.0, 1.0));
+					        Distant light1 = new Distant();light1.setAzimuth(116.16);light1.setElevation(124.53);light1.setColor(new Color(0.4399999976158142, 0.7538853287696838, 1.0, 1.0));
 					        
-					        Lighting lighting1 = new Lighting();
-					        lighting1.setDiffuseConstant(2.0);
-					        lighting1.setSpecularConstant(0.6);
-					        lighting1.setSpecularExponent(11.16);
-					        lighting1.setSurfaceScale(2.2);
-					        lighting1.setLight(light1);
-					        lighting1.setBumpInput(new Shadow());
+					        Lighting lighting1 = new Lighting();lighting1.setDiffuseConstant(2.0);lighting1.setSpecularConstant(0.6);lighting1.setSpecularExponent(11.16);lighting1.setSurfaceScale(2.2);lighting1.setLight(light1);lighting1.setBumpInput(new Shadow());
 					        
-					        Distant light2 = new Distant();
-					        light2.setAzimuth(116.16);
-					        light2.setElevation(124.53);
-					        light2.setColor(new Color(0.4399999976158142, 0.7538853287696838, 1.0, 1.0));
+					        Distant light2 = new Distant();light2.setAzimuth(116.16);light2.setElevation(124.53);light2.setColor(new Color(0.4399999976158142, 0.7538853287696838, 1.0, 1.0));
 					        
-					        Lighting lighting2 = new Lighting();
-					        lighting2.setDiffuseConstant(2.0);
-					        lighting2.setSpecularConstant(0.6);
-					        lighting2.setSpecularExponent(11.16);
-					        lighting2.setSurfaceScale(2.2);
-					        lighting2.setLight(light2);
-					        lighting2.setBumpInput(new Shadow());
+					        Lighting lighting2 = new Lighting();lighting2.setDiffuseConstant(2.0);lighting2.setSpecularConstant(0.6);lighting2.setSpecularExponent(11.16);lighting2.setSurfaceScale(2.2);lighting2.setLight(light2);lighting2.setBumpInput(new Shadow());
 					        
-					        Distant light3 = new Distant();
-					        light3.setAzimuth(116.16);
-					        light3.setElevation(124.53);
-					        light3.setColor(new Color(0.4399999976158142, 0.7538853287696838, 1.0, 1.0));
+					        Distant light3 = new Distant();light3.setAzimuth(116.16);light3.setElevation(124.53);light3.setColor(new Color(0.4399999976158142, 0.7538853287696838, 1.0, 1.0));
 					        
-					        Lighting lighting3 = new Lighting();
-					        lighting3.setDiffuseConstant(2.0);
-					        lighting3.setSpecularConstant(0.6);
-					        lighting3.setSpecularExponent(11.16);
-					        lighting3.setSurfaceScale(2.2);
-					        lighting3.setLight(light3);
-					        lighting3.setBumpInput(new Shadow());
-					        
-					        Distant light4 = new Distant();
-					        light3.setAzimuth(116.16);
-					        light3.setElevation(124.53);
-					        light3.setColor(new Color(0.4399999976158142, 0.7538853287696838, 1.0, 1.0));
-					        
-					        Lighting lighting4 = new Lighting();
-					        lighting3.setDiffuseConstant(2.0);
-					        lighting3.setSpecularConstant(0.6);
-					        lighting3.setSpecularExponent(11.16);
-					        lighting3.setSurfaceScale(2.2);
-					        lighting3.setLight(light4);
-					        lighting3.setBumpInput(new Shadow());
+					        Lighting lighting3 = new Lighting();lighting3.setDiffuseConstant(2.0);lighting3.setSpecularConstant(0.6);lighting3.setSpecularExponent(11.16);lighting3.setSurfaceScale(2.2);lighting3.setLight(light3);lighting3.setBumpInput(new Shadow());
 							
+					        //Creating the first icon (editing)
+					        
+					        //FIRST ICON --------------------------------------------------
 					        temphb.getChildren().add(new ImageView()); 
 					        ImageView tempB1 = new ImageView();
 					        Rectangle overlay1 = new Rectangle(25, 25);
 					        overlay1.setFill(Color.TRANSPARENT);
-
-					        tempB1.setImage(new Image("edit.png"));
-					        tempB1.setPreserveRatio(true);
-					        tempB1.setFitWidth(25);
-					        tempB1.setFitHeight(25);
-					        tempB1.setEffect(lighting1);
-
+					        tempB1.setImage(new Image("edit.png"));tempB1.setPreserveRatio(true);tempB1.setFitWidth(25);tempB1.setFitHeight(25);tempB1.setEffect(lighting1);
+					        
+					        //Scaling up when mouse enters the imageview
 					        overlay1.setOnMouseEntered(event -> {
-					        	
-					            ScaleTransition sc = new ScaleTransition();
-					            sc.setNode(tempB1);
-					            sc.setToX(1.3);
-					            sc.setToY(1.3);
-					            sc.setInterpolator(Interpolator.EASE_BOTH);
-					            sc.setDuration(Duration.millis(200));
-					            sc.play();
+					            ScaleTransition sc = new ScaleTransition();sc.setNode(tempB1);sc.setToX(1.3);sc.setToY(1.3);sc.setInterpolator(Interpolator.EASE_BOTH);sc.setDuration(Duration.millis(200));sc.play();
 					            iconinfo.setText("Change info");
 					        });
-
+					        
+					        //Scaling down...
 					        overlay1.setOnMouseExited(event -> {
-					            ScaleTransition sc = new ScaleTransition();
-					            sc.setNode(tempB1);
-					            sc.setToX(1);
-					            sc.setToY(1);
-					            sc.setInterpolator(Interpolator.EASE_BOTH);
-					            sc.setDuration(Duration.millis(200));
-					            sc.play();
+					            ScaleTransition sc = new ScaleTransition();sc.setNode(tempB1);sc.setToX(1);sc.setToY(1);sc.setInterpolator(Interpolator.EASE_BOTH);sc.setDuration(Duration.millis(200));sc.play();
 					            iconinfo.setText("");
 					        });
+					        
+					        overlay1.setOnMouseClicked(event -> {
+					        	//if condition to deny opening the editing GUI more than once
+					        	if(scrollpanewithtextf.getEffect() == null || (scrollpanewithtextf.getEffect() != null && ((GaussianBlur)scrollpanewithtextf.getEffect()).getRadius() == 0.0)) {
+					            ScaleTransition sc = new ScaleTransition();sc.setNode(tempB1);sc.setToX(0.6);sc.setToY(0.6);sc.setInterpolator(Interpolator.EASE_OUT);sc.setDuration(Duration.millis(50));
+					            sc.setOnFinished(eventOnAnimationFinished -> {ScaleTransition sc2 = new ScaleTransition();sc2.setNode(tempB1);sc2.setToX(1.3);sc2.setToY(1.3);sc2.setInterpolator(Interpolator.EASE_BOTH);sc2.setDuration(Duration.millis(50));sc2.play();});
+					            sc.play();
+					            
+					            GaussianBlur blur = new GaussianBlur(0); scrollpanewithtextf.setEffect(blur);
+					            Timeline startblur = new Timeline(new KeyFrame(Duration.ZERO, new KeyValue(blur.radiusProperty(), 0)), new KeyFrame(Duration.millis(200), new KeyValue(blur.radiusProperty(), 10))); startblur.play();
+					            
+					            //changing the background to blue (editing specific)
+					            changeaccountinfopane.setBackground(Background.fill(new Color(0.1399999976158142, 0.3538853287696838, 0.5, 0.3)));
+					            TranslateTransition CAIPtt = new TranslateTransition(); CAIPtt.setNode(changeaccountinfopane); CAIPtt.setToX(0); CAIPtt.setInterpolator(Interpolator.EASE_IN); CAIPtt.setDuration(Duration.millis(200)); 
+					            CAIPtt.setOnFinished(caipttonfinishedevent -> {
+					            	scrollpanewithtextf.setOnMouseClicked(eventSPWTfevent -> {
+					            		Timeline endblur = new Timeline(new KeyFrame(Duration.ZERO, new KeyValue(blur.radiusProperty(), 10)), new KeyFrame(Duration.millis(200), new KeyValue(blur.radiusProperty(), 0))); endblur.play();
+							            TranslateTransition CAIPtto = new TranslateTransition(); CAIPtto.setNode(changeaccountinfopane); CAIPtto.setToX(-300); CAIPtto.setInterpolator(Interpolator.EASE_IN); CAIPtto.setDuration(Duration.millis(200)); CAIPtto.play();
+							            scrollpanewithtextf.setOnMouseClicked(null);
+						            });
+					            });
+					            CAIPtt.play();
+					            
+					            //settings specific to each button
+					            straccprimarktochange = f;
+					            AddAccbutton1.setOnAction(actionevent -> {
+					            	try {ChangeAccountofStorage(actionevent);} catch (IOException | NoSuchAlgorithmException e) {e.printStackTrace();}
+					            	Timeline endblur = new Timeline(new KeyFrame(Duration.ZERO, new KeyValue(blur.radiusProperty(), 10)), new KeyFrame(Duration.millis(200), new KeyValue(blur.radiusProperty(), 0))); endblur.play();
+							        TranslateTransition CAIPtto = new TranslateTransition(); CAIPtto.setNode(changeaccountinfopane); CAIPtto.setToX(-300); CAIPtto.setInterpolator(Interpolator.EASE_IN); CAIPtto.setDuration(Duration.millis(200)); CAIPtto.play();
+							        scrollpanewithtextf.setOnMouseClicked(null);
+					            });
+					            changeinfoofacctext.setText("Change info of " + ((Text)tfarr.get(f).getChildren().get(1)).getText().replaceAll("\n", ""));
+					            usernamefield1.setText(((Text)tfarr.get(f).getChildren().get(1)).getText().replaceAll("\n", ""));
+				            	passwordfield1.setText(((Text)tfarr.get(f).getChildren().get(2)).getText().replaceAll("\n", ""));
+				            	AddAccbutton1.setText("Update");
+					            usernamefield1.setVisible(true); usernamefield1.setDisable(false);
+					            passwordfield1.setVisible(true); passwordfield1.setDisable(false);
+					        	}
+					        });
+					        
+					        //overlaying a rect over the button with a transition to prevent weird behaviour when hovering
+					        StackPane stackPane1 = new StackPane();stackPane1.getChildren().addAll(tempB1, overlay1);temphb.getChildren().set(0, stackPane1);
 
-					        StackPane stackPane1 = new StackPane();
-					        stackPane1.getChildren().addAll(tempB1, overlay1);
-					        temphb.getChildren().set(0, stackPane1);
-
+					        //SECOND ICON --------------------------------------------------
 					        ImageView tempB2 = new ImageView();
 					        Rectangle overlay2 = new Rectangle(25, 25);
 					        overlay2.setFill(Color.TRANSPARENT);
-
-					        tempB2.setImage(new Image("bin.png"));
-					        tempB2.setPreserveRatio(true);
-					        tempB2.setFitWidth(25);
-					        tempB2.setFitHeight(25);
-					        tempB2.setEffect(lighting2);
+					        tempB2.setImage(new Image("bin.png"));tempB2.setPreserveRatio(true);tempB2.setFitWidth(25);tempB2.setFitHeight(25);tempB2.setEffect(lighting2);
 
 					        overlay2.setOnMouseEntered(event -> {
-					            ScaleTransition sc = new ScaleTransition();
-					            sc.setNode(tempB2);
-					            sc.setToX(1.3);
-					            sc.setToY(1.3);
-					            sc.setInterpolator(Interpolator.EASE_BOTH);
-					            sc.setDuration(Duration.millis(200));
-					            sc.play();
+					            ScaleTransition sc = new ScaleTransition();sc.setNode(tempB2);sc.setToX(1.3);sc.setToY(1.3);sc.setInterpolator(Interpolator.EASE_BOTH);sc.setDuration(Duration.millis(200));sc.play();
 					            iconinfo.setText("Delete account info");
+					        });
+					        
+					        overlay2.setOnMouseClicked(event -> {
+					        	//if condition to deny opening the editing GUI more than once
+					        	if(scrollpanewithtextf.getEffect() == null || (scrollpanewithtextf.getEffect() != null && ((GaussianBlur)scrollpanewithtextf.getEffect()).getRadius() == 0.0)) {
+					            ScaleTransition sc = new ScaleTransition();sc.setNode(tempB2);sc.setToX(0.6);sc.setToY(0.6);sc.setInterpolator(Interpolator.EASE_OUT);sc.setDuration(Duration.millis(50));
+					            sc.setOnFinished(eventOnAnimationFinished -> {ScaleTransition sc2 = new ScaleTransition();sc2.setNode(tempB2);sc2.setToX(1.3);sc2.setToY(1.3);sc2.setInterpolator(Interpolator.EASE_BOTH);sc2.setDuration(Duration.millis(50));sc2.play();});
+					            sc.play();
+					            
+					            GaussianBlur blur = new GaussianBlur(0); scrollpanewithtextf.setEffect(blur);
+					            Timeline startblur = new Timeline(new KeyFrame(Duration.ZERO, new KeyValue(blur.radiusProperty(), 0)), new KeyFrame(Duration.millis(200), new KeyValue(blur.radiusProperty(), 10))); startblur.play();
+					            
+					            //changing the background to blue (editing specific)
+					            changeaccountinfopane.setBackground(Background.fill(new Color(0.5, 0.1399999976158142, 0.3538853287696838, 0.3)));
+					            TranslateTransition CAIPtt = new TranslateTransition(); CAIPtt.setNode(changeaccountinfopane); CAIPtt.setToX(0); CAIPtt.setInterpolator(Interpolator.EASE_IN); CAIPtt.setDuration(Duration.millis(200)); 
+					            CAIPtt.setOnFinished(caipttonfinishedevent -> {
+					            		scrollpanewithtextf.setOnMouseClicked(eventSPWTfevent -> {
+					            		Timeline endblur = new Timeline(new KeyFrame(Duration.ZERO, new KeyValue(blur.radiusProperty(), 10)), new KeyFrame(Duration.millis(200), new KeyValue(blur.radiusProperty(), 0))); endblur.play();
+							            TranslateTransition CAIPtto = new TranslateTransition(); CAIPtto.setNode(changeaccountinfopane); CAIPtto.setToX(-300); CAIPtto.setInterpolator(Interpolator.EASE_IN); CAIPtto.setDuration(Duration.millis(200)); CAIPtto.play();
+							            scrollpanewithtextf.setOnMouseClicked(null);
+						            });
+					            });
+					            CAIPtt.play();
+					            
+					            //settings specific to the button
+					            straccprimarktochange = f;
+					            AddAccbutton1.setOnAction(actionevent -> {
+					            	try {deleteaccountfromstorage(actionevent);} catch (IOException e) {e.printStackTrace();}
+					            	Timeline endblur = new Timeline(new KeyFrame(Duration.ZERO, new KeyValue(blur.radiusProperty(), 10)), new KeyFrame(Duration.millis(200), new KeyValue(blur.radiusProperty(), 0))); endblur.play();
+							        TranslateTransition CAIPtto = new TranslateTransition(); CAIPtto.setNode(changeaccountinfopane); CAIPtto.setToX(-300); CAIPtto.setInterpolator(Interpolator.EASE_IN); CAIPtto.setDuration(Duration.millis(200)); CAIPtto.play();
+							        scrollpanewithtextf.setOnMouseClicked(null);
+					            });
+					            AddAccbutton1.setText("Confirm");
+					            changeinfoofacctext.setText("Confirm Deletion: " + ((Text)tfarr.get(f).getChildren().get(1)).getText().replaceAll("\n", ""));
+					            usernamefield1.setVisible(false); usernamefield1.setDisable(true);
+					            passwordfield1.setVisible(false); passwordfield1.setDisable(true);
+					            }
 					        });
 
 					        overlay2.setOnMouseExited(event -> {
-					            ScaleTransition sc = new ScaleTransition();
-					            sc.setNode(tempB2);
-					            sc.setToX(1);
-					            sc.setToY(1);
-					            sc.setInterpolator(Interpolator.EASE_BOTH);
-					            sc.setDuration(Duration.millis(200));
-					            sc.play();
+					            ScaleTransition sc = new ScaleTransition();sc.setNode(tempB2);sc.setToX(1);sc.setToY(1);sc.setInterpolator(Interpolator.EASE_BOTH);sc.setDuration(Duration.millis(200));sc.play();
 					            iconinfo.setText("");
 					        });
 
-					        StackPane stackPane2 = new StackPane();
-					        stackPane2.getChildren().addAll(tempB2, overlay2);
-					        temphb.getChildren().add(stackPane2);
+					        StackPane stackPane2 = new StackPane();stackPane2.getChildren().addAll(tempB2, overlay2);temphb.getChildren().add(stackPane2);
 
+					        //THIRD ICON ---------------------------------------------------------
 					        ImageView tempB3 = new ImageView();
 					        Rectangle overlay3 = new Rectangle(25, 25);
 					        overlay3.setFill(Color.TRANSPARENT);
-
-					        tempB3.setImage(new Image("show.png"));
-					        tempB3.setPreserveRatio(true);
-					        tempB3.setFitWidth(25);
-					        tempB3.setFitHeight(25);
-					        tempB3.setEffect(lighting3);
+					        if(((Text)tfarr.get(i).getChildren().get(2)).isVisible()) tempB3.setImage(new Image("hide.png"));
+					        else tempB3.setImage(new Image("show.png"));
+					        tempB3.setPreserveRatio(true);tempB3.setFitWidth(25);tempB3.setFitHeight(25);tempB3.setEffect(lighting3);
 
 					        overlay3.setOnMouseEntered(event -> {
-					            ScaleTransition sc = new ScaleTransition();
-					            sc.setNode(tempB3);
-					            sc.setToX(1.3);
-					            sc.setToY(1.3);
-					            sc.setInterpolator(Interpolator.EASE_BOTH);
-					            sc.setDuration(Duration.millis(200));
+					            ScaleTransition sc = new ScaleTransition();sc.setNode(tempB3);sc.setToX(1.3);sc.setToY(1.3);sc.setInterpolator(Interpolator.EASE_BOTH);sc.setDuration(Duration.millis(200));sc.play();
+					            iconinfo.setText(((Text)tfarr.get(f).getChildren().get(2)).isVisible() ? "Hide Password" : "Show Password");
+					        });
+					        
+					        overlay3.setOnMouseClicked(event -> {
+					        	boolean passvisible = ((Text)tfarr.get(f).getChildren().get(2)).isVisible();
+					        	ScaleTransition sc = new ScaleTransition();sc.setNode(tempB3);sc.setToX(0.6);sc.setToY(0.6);sc.setInterpolator(Interpolator.EASE_OUT);sc.setDuration(Duration.millis(50));
+					            sc.setOnFinished(eventOnAnimationFinished -> {ScaleTransition sc2 = new ScaleTransition();sc2.setNode(tempB3);sc2.setToX(1.3);sc2.setToY(1.3);sc2.setInterpolator(Interpolator.EASE_BOTH);sc2.setDuration(Duration.millis(50));sc2.play();});
 					            sc.play();
-					            iconinfo.setText("Show password");
+					            
+					            TranslateTransition ttsendtohide = new TranslateTransition();
+					            ttsendtohide.setNode(tfarr.get(f).getChildren().get(2));
+					            ttsendtohide.setToX(-1 * ((Text)tfarr.get(f).getChildren().get(2)).getText().length() * 8);
+					            ttsendtohide.setInterpolator(Interpolator.EASE_BOTH);
+					            ttsendtohide.setDuration(Duration.millis(100));
+					            ttsendtohide.setOnFinished(event2 -> {
+					            	tfarr.get(f).getChildren().get(2).setVisible(false);
+					            	iconinfo.setText("Show Password");
+					            	tempB3.setImage(new Image("show.png"));
+					            });
+					            
+					            TranslateTransition ttsendtoshow = new TranslateTransition();
+					            ttsendtoshow.setNode(tfarr.get(f).getChildren().get(2));
+					            ttsendtoshow.setFromX(-1 * ((Text)tfarr.get(f).getChildren().get(2)).getText().length() * 8);
+					            ttsendtoshow.setToX(0);
+					            ttsendtoshow.setInterpolator(Interpolator.EASE_BOTH);
+					            ttsendtoshow.setDuration(Duration.millis(100));
+					            ttsendtoshow.setOnFinished(event2 -> {
+					            	tempB3.setImage(new Image("hide.png"));
+					            	iconinfo.setText("Hide Password");
+					            });
+					            
+					            if(passvisible) ttsendtohide.play();
+					            else {
+					            	tfarr.get(f).getChildren().get(2).setVisible(true);
+					            	ttsendtoshow.play();
+					            }
+					            
 					        });
 
 					        overlay3.setOnMouseExited(event -> {
-					            ScaleTransition sc = new ScaleTransition();
-					            sc.setNode(tempB3);
-					            sc.setToX(1);
-					            sc.setToY(1);
-					            sc.setInterpolator(Interpolator.EASE_BOTH);
-					            sc.setDuration(Duration.millis(200));
-					            sc.play();
-					            iconinfo.setText("");
+					            ScaleTransition sc = new ScaleTransition();sc.setNode(tempB3);sc.setToX(1);sc.setToY(1);sc.setInterpolator(Interpolator.EASE_BOTH);sc.setDuration(Duration.millis(200));sc.play();iconinfo.setText("");
 					        });
 
-					        StackPane stackPane3 = new StackPane();
-					        stackPane3.getChildren().addAll(tempB3, overlay3);
-					        temphb.getChildren().add(stackPane3);
+					        StackPane stackPane3 = new StackPane();stackPane3.getChildren().addAll(tempB3, overlay3);temphb.getChildren().add(stackPane3);
 							
+					        //INDIVIDUAL PANE ADDITION AND FINALIZATION:
 							panearr.get(i).getChildren().add(layered);
 							
 							panearr.get(i).setOnMouseMoved(event -> {
@@ -1263,9 +1279,6 @@ public class Controller extends EncryptionObj {
 							
 							layered.setTranslateX(600);
 							
-							//temphb.setLayoutX(600);
-							
-							final int f = i;
 							panearr.get(i).setOnMouseEntered(event -> {
 								ObjectProperty<Color> color = new SimpleObjectProperty<Color>((Color)panearr.get(f).getBackground().getFills().getFirst().getFill());
 						        color.addListener((observable, oldValue, newValue) -> {
@@ -1309,21 +1322,21 @@ public class Controller extends EncryptionObj {
 								to.play();
 							});
 							
+							if(i % 2 == 0) panearr.get(i).setBackground(Background.fill(Color.WHITE));
+							else panearr.get(i).setBackground(Background.fill(Color.LIGHTGRAY));
 							accountdisp.getChildren().add(panearr.get(i));
 							Line seperatorline = new Line();
 							seperatorline.setStartX(-670);
 							accountdisp.getChildren().add(seperatorline);
+							if(i > 2) {
+								accountdisp.setPrefHeight(i*114);
+							}
+							scrollpanewithtextf.setVbarPolicy(ScrollBarPolicy.NEVER);
+							storedaccountsanchorpane.setOnKeyPressed(event -> {
+								handleSmoothScrollKeyPressed(event, scrollpanewithtextf);
+							});
 							
 						}
-						/*for(int g = 0; g < txtlist.size(); g += 3) {
-							accountdisp.getChildren().add(txtlist.get(g));
-							accountdisp.getChildren().add(txtlist.get(g + 1));
-							accountdisp.getChildren().add(txtlist.get(g + 2));
-							Line seperatorline = new Line();
-							seperatorline.setStartX(-500);
-					
-							accountdisp.getChildren().add(seperatorline);
-						}*/
 				});
 				
 				} catch(NullPointerException | SQLException | NoSuchAlgorithmException np_sql_nsa_murl_ioE) {np_sql_nsa_murl_ioE.printStackTrace();}
@@ -1344,58 +1357,21 @@ public class Controller extends EncryptionObj {
 				String tablename = "accstorage";
 				if(islocalacc) tablename = "accstoragelocal";
 				ResultSet mainrs = connectionstmt.executeQuery("SELECT primark, id, servicename, username, password FROM " + tablename + " WHERE id=" + Integer.toString(currentheldID));
-				int f = 0; String usernametodelete = "";
+				int f = 0;
 				while(mainrs.next()) {
-					if(f==accountselc.getItems().indexOf(accountselc.getValue())) {
-						System.out.println(primarykeyfordeletingline = mainrs.getInt("primark"));
-						usernametodelete = mainrs.getString("username");
+					if(f==straccprimarktochange) {
+						System.out.println((primarykeyfordeletingline = mainrs.getInt("primark")) + " THIS WILL BE CHANGED");
 						break;
 					}
 					else f++;
 				}
-		
-				
-				Alert alert = new Alert(AlertType.CONFIRMATION, "Confirm Deletion of the account information of: " + EncryptionObj.DecryptFunc(usernametodelete, temp) + "?", ButtonType.YES, ButtonType.NO);
-				alert.showAndWait();
 				mainrs.close();
-				
-				if (alert.getResult() == ButtonType.YES) {
 					connectionstmt.executeUpdate("DELETE FROM " + tablename + " WHERE primark=" + primarykeyfordeletingline);
 					deletetextfromdisp();
 					showaccounts();
-				}
 			} catch(SQLException | NoSuchAlgorithmException | IOException sqlE) {sqlE.printStackTrace();}
 	}
 
-	//opens the window from which the stracc's details can be changed, and preparing the name and password in their respective fields
-	public void changedetails(ActionEvent e) throws NoSuchAlgorithmException, IOException {
-		new Thread() {
-			public void run(){
-				try {
-					String tablename = "accstorage";
-					if(islocalacc) tablename = "accstoragelocal";
-					ResultSet mainrs = connectionstmt.executeQuery("SELECT primark, id, servicename, username, password FROM " + tablename + " WHERE id=" + Integer.toString(currentheldID));
-					
-					int f = 0;
-					while(mainrs.next()) {
-					if(f == accountselc.getItems().indexOf(accountselc.getValue())) {
-					passwordfield1.setText(EncryptionObj.DecryptFunc(mainrs.getString("password"), temp));
-					usernamefield1.setText(EncryptionObj.DecryptFunc(mainrs.getString("username"), temp));
-					break;
-						} else f++;		
-					}
-					} catch (SQLException | NoSuchAlgorithmException sql_nsaE) {sql_nsaE.printStackTrace();}
-			}
-		}.start();
-		
-			accountdisp.getChildren().clear();
-	
-		scrollpanewithtextf.setVisible(false);
-		scrollpanewithtextf.setDisable(true);
-		
-		
-	}
-	
 	//changes the details of the stracc
 	public void ChangeAccountofStorage(ActionEvent e) throws IOException, NoSuchAlgorithmException {
 		
@@ -1405,15 +1381,19 @@ public class Controller extends EncryptionObj {
 					//connectionstmt.executeUpdate("UPDATE accstorage(username, password) VALUES('" + EncryptionObj.EncryptFunc(usernamefield1.getText(), "-+-قثق[{}]dSec--343GJRIIDL__PP#$FAWEAL$1231344556324231") + "','" + EncryptionObj.EncryptFunc(passwordfield1.getText(), "-+-قثق[{}]dSec--343GJRIIDL__PP#$FAWEAL$1231344556324231") + "') WHERE id = " + currentheldID);
 					String tablename = "accstorage", tempprimark = "";
 					if(islocalacc) tablename = "accstoragelocal";
-					ResultSet mainrs = connectionstmt.executeQuery("SELECT primark, id, servicename, username, password FROM "+tablename+" WHERE id=" + Integer.toString(currentheldID));
+					ResultSet mainrs = connectionstmt.executeQuery("SELECT primark, id, servicename, username, password FROM "+tablename+" WHERE id='" + Integer.toString(currentheldID) + "';");
 					int f = 0;
 					while(mainrs.next()) {
-						if(f == accountselc.getItems().indexOf(accountselc.getValue())) {
+						if(f == straccprimarktochange) {
 						tempprimark = mainrs.getString("primark"); break;
 						} else f++;
 						}
-						connectionstmt.executeUpdate("UPDATE "+tablename+" SET username = '" + EncryptionObj.EncryptFunc(usernamefield1.getText(), temp) + "', password = '" + EncryptionObj.EncryptFunc(passwordfield1.getText(), temp) + "' WHERE primark = " + tempprimark + " ;");
-						//
+						PreparedStatement pstmt = connectionatt.prepareStatement("UPDATE " + tablename + " SET username = ?, password = ? WHERE primark = ?");
+					    pstmt.setString(1, EncryptionObj.EncryptFunc(usernamefield1.getText(), temp));
+					    pstmt.setString(2, EncryptionObj.EncryptFunc(passwordfield1.getText(), temp));
+					    pstmt.setInt(3, Integer.parseInt(tempprimark));
+					    pstmt.executeUpdate();
+					    //
 					//mainrs.absolute( + 1);
 					/*mainrs.updateString("username", EncryptionObj.EncryptFunc(usernamefield1.getText(), "-+-قثق[{}]dSec--343GJRIIDL__PP#$FAWEAL$1231344556324231"));
 					mainrs.updateString("password", EncryptionObj.EncryptFunc(passwordfield1.getText(), "-+-قثق[{}]dSec--343GJRIIDL__PP#$FAWEAL$1231344556324231"));
@@ -1784,14 +1764,14 @@ public class Controller extends EncryptionObj {
 					Text result = new Text("Updated Settings Successfully");
 					result.setFont(Font.font("Ubuntu", FontWeight.BOLD, 20));
 					try {
-						if(!islocalacc) {
-						int mainupdate = connectionstmt.executeUpdate("UPDATE accinfo SET settings = '" + settingscode.toString() + "' WHERE id = " + currentheldID);
-						} else {
-							PreparedStatement pstmt = connectionatt.prepareStatement("UPDATE accinfolocal SET settings = ? WHERE id = ?");
+						String tablename = "accinfolocal";
+						if(!islocalacc) tablename = "accinfo";
+							
+							PreparedStatement pstmt = connectionatt.prepareStatement("UPDATE "+tablename+" SET settings = ? WHERE id = ?");
 							pstmt.setString(1, settingscode.toString());
 							pstmt.setInt(2, currentheldID);
 							pstmt.execute();
-						}
+							
 						settingsresulttextflow.getChildren().add(result);
 					} catch(SQLException sqle) {
 						sqle.printStackTrace();
@@ -2422,6 +2402,36 @@ public class Controller extends EncryptionObj {
 
 	    // Calculate the angle using Math.atan2
 	    return Math.atan2(deltaY, deltaX);
+	}
+	
+	private void smoothScroll(ScrollPane scrollPane, double vValue) {
+        Timeline timeline = new Timeline();
+        KeyValue kvV0 = new KeyValue(scrollPane.vvalueProperty(), 0);
+        KeyValue kvV1 = new KeyValue(scrollPane.vvalueProperty(), vValue);
+        KeyFrame kf0 = new KeyFrame(Duration.millis(100), kvV0);
+        KeyFrame kf1 = new KeyFrame(Duration.millis(100), kvV1);
+        timeline.getKeyFrames().add(kf0);
+        timeline.getKeyFrames().add(kf1);
+        timeline.play();
+    }
+	
+	private void handleSmoothScrollKeyPressed(KeyEvent event, ScrollPane scrollPane) {
+        double vValue = scrollPane.getVvalue();
+
+        switch (event.getCode()) {
+            case UP:
+                vValue -= 0.2;
+                vValue = Math.max(vValue, 0); // Ensure it doesn't scroll beyond the top
+                smoothScroll(scrollPane,  vValue);
+                break;
+            case DOWN:
+                vValue += 0.2;
+                vValue = Math.min(vValue, 1); // Ensure it doesn't scroll beyond the bottom
+                smoothScroll(scrollPane,  vValue);
+                break;
+		default:
+			break;
+        }
 	}
 }
 
