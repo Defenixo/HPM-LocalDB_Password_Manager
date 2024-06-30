@@ -35,6 +35,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 import java.util.Arrays;
 
@@ -99,6 +100,10 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
+import javafx.scene.layout.Border;
+import javafx.scene.layout.BorderStroke;
+import javafx.scene.layout.BorderStrokeStyle;
+import javafx.scene.layout.BorderWidths;
 import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
@@ -132,9 +137,9 @@ public class Controller extends EncryptionObj {
 	
 	//HOUSAINI LOGIN SCREEN
 	@FXML
-	private TextField servicenamefield, usernamefield, usernamefield1, passwordfield, passwordfield1, housaininewpassword, passwordstrengthtextfield, housainiusername, accsearch, adminnewpass;
+	private TextField servicenamefield, usernamefield, usernamefield1, passwordfield, passwordfield1, housaininewpassword, passwordstrengthtextfield, housainiusername, accsearch, adminnewpass, straccsearch;
 	@FXML
-	private Text errortext, servicenametext, usernametext, passwordtext, accerrorlabel, passindicator, statustext, createacctext, loginwithhousainiacctext, loginwithlocalacctext, accwarning, titlepasswordstrengthindicator, subtitlepasswordstrengthindicator, statustextadmin, changeinfoofacctext;
+	private Text errortext, servicenametext, usernametext, passwordtext, accerrorlabel, passindicator, statustext, createacctext, loginwithlocalacctext, accwarning, titlepasswordstrengthindicator, subtitlepasswordstrengthindicator, statustextadmin, changeinfoofacctext;
 	@FXML
 	private TextFlow passwordstrengthtextflow, settingsresulttextflow;
 	@FXML
@@ -148,7 +153,7 @@ public class Controller extends EncryptionObj {
 	@FXML
 	private Pane buttoncont, passwordstrengthpane, housainiaccountsettingspane, createaccountoptionspane, acclistpane, changeaccountinfopane;
 	@FXML
-	private ChoiceBox accountselc, resolutionselc;
+	private ChoiceBox resolutionselc, filterstraccsearch;
 	@FXML
 	private CheckBox reqselctoshowpass, reqpasswordcheckbox, makeusernamechangeablecheckbox, makepasswordchangeablecheckbox, makeaccountdeletablecheckbox, allowautodbbackup;
 	@FXML
@@ -184,16 +189,18 @@ public class Controller extends EncryptionObj {
 	private static List<String> passwordlist = new ArrayList<String>();
 	private static Connection connectionatt;
 	private static Statement connectionstmt;//DriverManager.getConnection("jdbc:mysql://localhost/accdb?", "acc", "2994mYsQl#");
-	private static Font ub, pa;
 	
 	ArrayList<FadeTransition> ftlistENTER = new ArrayList<FadeTransition>();
 	ArrayList<TranslateTransition> ttlistENTER = new ArrayList<TranslateTransition>();
 	ArrayList<FadeTransition> ftlistEXIT = new ArrayList<FadeTransition>();
 	ArrayList<TranslateTransition> ttlistEXIT = new ArrayList<TranslateTransition>();
+
+	static ArrayList<Pane> allstraccpanes = new ArrayList<Pane>();
 	static ArrayList<Text> usernametexts = new ArrayList<Text>();
 	static ArrayList<Node> allnodesofvbox = new ArrayList<Node>();
 	static ArrayList<Pane> tempsavedaccpanes = new ArrayList<Pane>();
 	
+	// Log in/Create Housaini account
 	public void loginorcreatePassSeperate(ActionEvent e) throws NoSuchAlgorithmException, IOException, SQLException {
 		
 			if(canthreadrunagain) {
@@ -309,41 +316,25 @@ public class Controller extends EncryptionObj {
 			
 	}
 	
+	//Invoked on shutdown, backs up database
 	public static void shutdown() throws NoSuchAlgorithmException, IOException, InvalidKeySpecException, SQLException {
 		
-		System.out.println("SHUTDOWN EXECUTED");
+		if(connectionatt != null) {
 		ResultSet mainrs = connectionstmt.executeQuery("SELECT * FROM hpmgeneralsettings WHERE primark = 1;");
 		//mainrs.next();
 		String automaticDBbackuplocation = null;
 		
-		if(mainrs.getBoolean("allowautodbbackup"))
+		if(mainrs.getBoolean("allowautodbbackup")) {
 			automaticDBbackuplocation = mainrs.getString("databasebackupfilelocation");
-		
-		backupDatabasestatic("accdb", automaticDBbackuplocation);
+			backupDatabasestatic("accdb", automaticDBbackuplocation);
+		}
 		
 		connectionatt.close();
 		connectionstmt.close();
-    
+		}
 	}
 	
-	public void passwordstrengthonselectionchanged() {
-		/*ColorInput color = new ColorInput();
-		color.setPaint(Color.WHITE);
-		color.setWidth(Double.MAX_VALUE);
-		color.setHeight(Double.MAX_VALUE);
-
-		Blend blend = new Blend(BlendMode.DIFFERENCE);
-		blend.setBottomInput(color);
-
-		passwordstrengthpane.setEffect(blend);
-		titlepasswordstrengthindicator.setEffect(blend);
-		passwordstrengthlineseperator.setEffect(blend);
-		subtitlepasswordstrengthindicator.setEffect(blend);
-		passwordstrengthtextfield.setEffect(blend);
-		passwordstrengthprogressbar.setEffect(blend);*/
-		
-	}
-	
+	//Housaini account: Changes button action from Logging in to creating account
 	public void signuptoaccTEXT() {
 		createpassbutton.setText("Create Account");
 		createpassbutton.setOnAction((event) -> {
@@ -355,6 +346,7 @@ public class Controller extends EncryptionObj {
 							double changeop = 0.4; boolean goup = true; int timedone = 0;
 							accerrorlabel.setText("Creating Account");
 						
+							//THIS REPLACE IT WITH A FADETRANSITION
 						while(timedone < 4300) {
 							if(changeop < 0.9 && goup)
 							changeop += 0.1;
@@ -434,24 +426,23 @@ public class Controller extends EncryptionObj {
 				
 	}
 	
+	//Local account: allows searching through the local accounts on the login screen
 	public void accsearchonsearch() {
-		//loadaccounts();
 		
 		if(!accsearch.getText().isEmpty()) {
-		ArrayList<Pane> searchedaccpanes = new ArrayList<Pane>();
+			ArrayList<Pane> searchedaccpanes = new ArrayList<Pane>();
 		for(Node child : tempsavedaccpanes)
-				if(((Text)((Pane)child).getChildren().get(2)).getText().toString().contains(accsearch.getText()))
-					searchedaccpanes.add((Pane)child);
-			
+			if(((Text)((Pane)child).getChildren().get(2)).getText().toString().contains(accsearch.getText()))
+				searchedaccpanes.add((Pane)child);
 		uservbox.getChildren().clear();
 		for(Node child : searchedaccpanes) uservbox.getChildren().add(child);
-		
 		} else {
 			loadaccounts();
 		}
+		
 	}
 
-	@FXML
+	//Invoked upon initalization of any scene
 	public void initialize() {
 		try {
 			if(islocalacc) {
@@ -463,7 +454,7 @@ public class Controller extends EncryptionObj {
 				
 				ResultSet localaccountrs = connectionstmt.executeQuery("SELECT * FROM hpmgeneralsettings WHERE primark = 1;");
 				
-				allowautodbbackup.setSelected(localaccountrs.getBoolean("allowautodbbackup"));
+				if(isadmin) allowautodbbackup.setSelected(localaccountrs.getBoolean("allowautodbbackup"));
 				localaccountrs.close();
 			}
 			
@@ -494,6 +485,7 @@ public class Controller extends EncryptionObj {
 	static ArrayList<String> tempusercolors = new ArrayList<String>();
 	static ArrayList<String> temppasswords = new ArrayList<String>();
 	
+	//Local account: uses the above arraylists to store information of local accounts from the ResultSet, then displays them
 	public void loadaccounts() {
 		
 	if(loadlocalaccounts) {
@@ -528,7 +520,7 @@ public class Controller extends EncryptionObj {
 				Text logintext = new Text("Log in");
 				Text usernametext = new Text(tempusernames.get(i));
 				
-				if(temppasswords.get(i).equals(EncryptionObj.EncryptFuncHOUSAINIPASS(usernameTEMP + "684", EncryptionObj.hashKey(usernameTEMP + "123"))))
+				if(temppasswords.get(i).equals(EncryptionObj.EncryptFuncHOUSAINIPASS(tempusernames.get(i) + "38FfiGKBdlAO56yh%3400bkg223KgoADAdAZ*(h8", EncryptionObj.hashKey(tempusernames.get(i) + "49GKALLVB(12$$%%#glfoaS:DPFOrllgSDADW"))))
 					logintext.setText("No Password");
 				
 				logintext.setFont(Font.font("Ubuntu", FontWeight.BOLD,FontPosture.ITALIC, 21));
@@ -633,16 +625,9 @@ public class Controller extends EncryptionObj {
 							
 		}
 	}
-	
-	public void signuptohousainiaccTEXT() {
-		initialize();
-	}
 		
+	//Local account: method for the login/create account button.
 	public void createorlogintolocalAcc(ActionEvent e) {
-		
-			/*createpassbutton.setDisable(true);
-			acclistpane.setDisable(true);
-			reqpasswordcheckbox.setDisable(true);*/
 			
 			new Thread() {
 				public void run() {
@@ -686,7 +671,8 @@ public class Controller extends EncryptionObj {
 							if(reqpasswordcheckbox.isSelected())
 								connectionstmt.execute("INSERT INTO accinfolocal(password, username, settings, usercolor, usersettings) VALUES('" + EncryptionObj.EncryptFuncHOUSAINIPASS(housainipassword.getText(), EncryptionObj.hashKey(housainipassword.getText())) + "','" + housainiusername.getText() + "','0000000000','" + toHexString(usercolorpicker.getValue()) + "','" + strb.toString() + "');");
 							else
-								connectionstmt.execute("INSERT INTO accinfolocal(password, username, settings, usercolor, usersettings) VALUES('" + EncryptionObj.EncryptFuncHOUSAINIPASS(housainiusername.getText() + "684", EncryptionObj.hashKey(housainiusername.getText() + "123")) + "','" + housainiusername.getText() + "','0000000000','" + toHexString(usercolorpicker.getValue()) + "','" + strb.toString() + "');");	
+								connectionstmt.execute("INSERT INTO accinfolocal(password, username, settings, usercolor, usersettings) VALUES('" + EncryptionObj.EncryptFuncHOUSAINIPASS(housainiusername.getText() + "38FfiGKBdlAO56yh%3400bkg223KgoADAdAZ*(h8", EncryptionObj.hashKey(housainiusername.getText() + "49GKALLVB(12$$%%#glfoaS:DPFOrllgSDADW")) + "','" + housainiusername.getText() + "','0000000000','" + toHexString(usercolorpicker.getValue()) + "','" + strb.toString() + "');");	
+							
 							accerrorlabel.setFill(Color.BLACK);
 							accerrorlabel.setText("Created account: " + housainiusername.getText());
 							animateboop(accerrorlabel);
@@ -694,6 +680,8 @@ public class Controller extends EncryptionObj {
 							Platform.runLater(new Runnable() {
 								public void run() {
 									loadaccounts();
+									reqpasswordcheckbox.setSelected(true);
+									requirespassword(new ActionEvent());
 								}});
 									housainiusername.clear();
 									housainipassword.clear();
@@ -742,7 +730,7 @@ public class Controller extends EncryptionObj {
 										@Override
 										public void run() {
 											double[] exponents = {0.167,0.25,-0.5};
-											LoadScene("/PasswordManagerMain.fxml", loginwithhousainiacctext, exponents);
+											LoadScene("/PasswordManagerMain.fxml", uservbox, exponents);
 										}
 									});
 									
@@ -767,7 +755,7 @@ public class Controller extends EncryptionObj {
 							ResultSet mainrs = connectionstmt.executeQuery("SELECT id, password, username, settings, usersettings FROM accinfolocal");
 							boolean r = false;
 							while(mainrs.next()) {
-								if(mainrs.getString("username").equals(housainiusername.getText()) && (mainrs.getString("password").equals(EncryptionObj.EncryptFuncHOUSAINIPASS(housainipassword.getText(), EncryptionObj.hashKey(housainipassword.getText()))) || (r = mainrs.getString("password").equals(EncryptionObj.EncryptFuncHOUSAINIPASS(housainiusername.getText() + "684", EncryptionObj.hashKey(housainiusername.getText() + "123")))))) {
+								if(mainrs.getString("username").equals(housainiusername.getText()) && (mainrs.getString("password").equals(EncryptionObj.EncryptFuncHOUSAINIPASS(housainipassword.getText(), EncryptionObj.hashKey(housainipassword.getText()))) || (r = mainrs.getString("password").equals(EncryptionObj.EncryptFuncHOUSAINIPASS(housainiusername.getText() + "38FfiGKBdlAO56yh%3400bkg223KgoADAdAZ*(h8", EncryptionObj.hashKey(housainiusername.getText() + "49GKALLVB(12$$%%#glfoaS:DPFOrllgSDADW")))))) {
 									allow = true; 
 									currentheldID = mainrs.getInt("id");
 									usersettings = mainrs.getString("settings");
@@ -775,13 +763,11 @@ public class Controller extends EncryptionObj {
 									reqpass = !r;
 									islocalacc = true;
 									currentpreviousmonth = 15;
-									useroptions = mainrs.getString("usersettings");
+									if(!reqpass) useroptions = mainrs.getString("usersettings");
 									if(!r)
-										temp = EncryptionObj.EncryptFuncHOUSAINIPASS(housainipassword.getText() + "E4Af3Sd@", EncryptionObj.hashKey(housainipassword.getText()));
+										temp = EncryptionObj.EncryptFuncHOUSAINIPASS(housainipassword.getText() + "E4Af3Sd@", EncryptionObj.hashKey(housainipassword.getText() + "38FfiGKBdl94994FOKSALL560870-GL12#$@(*(fkgkall34ltg)(r%**goADAdAZ*(h8)"));
 									else
-										temp = EncryptionObj.EncryptFuncHOUSAINIPASS(Integer.toString(mainrs.getInt("id")) + "%8ggdF3r", EncryptionObj.hashKey("id"));
-									//System.out.println(EncryptionObj.DecryptFuncHOUSAINIPASS(mainrs.getString("password"), EncryptionObj.hashKey(housainiusername.getText() + "123")));
-									
+										temp = EncryptionObj.EncryptFuncHOUSAINIPASS(Integer.toString(mainrs.getInt("id")) + "%8ggdF3r", EncryptionObj.hashKey("id") + "38FfiGKBdl94994FOKSALL560870-GL12#$@(*(fkgkall34ltg)(r%**goADAdAZ*(h8");
 								}
 							}
 							if(allow) {
@@ -797,7 +783,7 @@ public class Controller extends EncryptionObj {
 									@Override
 									public void run() {
 										double[] exponents = {0.167,0.25,-0.5};
-										LoadScene("/PasswordManagerMain.fxml", loginwithhousainiacctext, exponents);
+										LoadScene("/PasswordManagerMain.fxml", uservbox, exponents);
 									}
 								});
 							} else {
@@ -805,7 +791,6 @@ public class Controller extends EncryptionObj {
 								accerrorlabel.setFill(Color.RED);
 								accerrorlabel.setText("Wrong account information");
 							}
-							
 							
 						}
 					}
@@ -823,6 +808,7 @@ public class Controller extends EncryptionObj {
 			}.start();
 		}
 	
+	//Local account: if password is not required, show this window
 	public void requirespassword(ActionEvent e) {
 		if(!reqpasswordcheckbox.isSelected()) {
 			housainipassword.setDisable(true);
@@ -840,6 +826,7 @@ public class Controller extends EncryptionObj {
 		}
 	}
 	
+	//DATABASE: manual db backup
 	public void localdbbackup(ActionEvent e) {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Back up Database");
@@ -851,6 +838,7 @@ public class Controller extends EncryptionObj {
         }
     }
     
+	//DATABASE: specify automatic db backup location
     public void automaticdbbackup(ActionEvent e) {
     	
     	try {
@@ -866,6 +854,7 @@ public class Controller extends EncryptionObj {
 		
     }
 	
+    //DATABASE: allow automatically backing up db every time application closes
 	public void allowautomaticdbbackup(ActionEvent e) {
 		try {
 			if(allowautodbbackup.isSelected()) {
@@ -879,43 +868,12 @@ public class Controller extends EncryptionObj {
     	
 	}
 	
+	//DATABASE: restore an old backup for a database
 	public void dbrestore(ActionEvent e) throws IOException {
-		/*FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Choose Database Backup");
-        File file = fileChooser.showSaveDialog((Stage)((Node)e.getSource()).getScene().getWindow());
-        
-        //StringBuilder fileb = new StringBuilder(file.getPath());
-        ArrayList<Character> filebarr = new ArrayList<Character>();
-        StringBuilder filepath = new StringBuilder(file.getPath());
-        
-        /*for(int i = 0; i < filebarr.size(); i++) {
-        	filebarr.add(filepath.charAt(i));
-        }
-        
-        int numberofleftslashes, numberofrightslashes, indexofleft, indexofright;
-        
-        for(char a : filebarr) {
-        	
-        	if(a=='/') {
-        		numberofleftslashes += 1;
-        		indexofleft = filebarr.indexOf(a);
-        	} else if(a == '\\') {
-        		numberofrightslashes += 1;
-        		indexofright = filebarr.indexOf(a);
-        	}
-        			
-        }
-        
-        if(numberofleftslashes > 0 && numberofrightslashes > 0) {
-        	throw new IOException("Currently, HPM is unable to support a file path which contains both forward facing slashes and back facing slashes");
-        }
-        
-        replaceDatabaseWithBackup("/accdb", file.getPath(), "/accdb");*/
 		
 		FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Select Backup Database File");
-        //fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Database Files", "*.db", "*.*"));
-
+        
         File selectedFile = fileChooser.showOpenDialog((Stage)((Node)e.getSource()).getScene().getWindow());
         if (selectedFile != null) {
             String originalDbPath = null;
@@ -930,10 +888,9 @@ public class Controller extends EncryptionObj {
                 q.printStackTrace();
             }
         }
-        
-        //Platform.exit();
 	}
     
+	//log out of current account and return back to the login screen
 	public void logout(ActionEvent e) throws SQLException {
 		islocalacc = false;
 		isadmin = false;
@@ -1009,14 +966,29 @@ public class Controller extends EncryptionObj {
 	
 	}
 	
-	//displays accounts
+	//displays accounts, invoked on opening the "stored accounts" tab
 	public void showaccounts() throws IOException, NoSuchAlgorithmException {
 			    
 		passwordlist.clear();
 		txtlist.clear();
 		accountdisp.getChildren().clear();
-		accountselc.getItems().clear();
 		accountdisp.setStyle("-fx-background-color: #ffffff");
+		BorderStroke buttonborder = new BorderStroke(Color.rgb(0, 0, 0, 0.8), BorderStrokeStyle.DASHED, CornerRadii.EMPTY, new BorderWidths(2));
+		AddAccbutton1.setBorder(new Border(buttonborder));
+		AddAccbutton1.setBackground(Background.fill(Color.rgb(150,150,150,0.5)));
+		AddAccbutton1.setFont(Font.font("Ubuntu", FontWeight.BOLD, 20));
+		AddAccbutton1.setTextFill(Color.BLACK);
+		AddAccbutton1.setOnMouseEntered(event -> {
+			AddAccbutton1.setBackground(Background.fill(Color.rgb(210, 210, 210, 0.6)));
+		}); 
+		AddAccbutton1.setOnMouseExited(event -> {
+			AddAccbutton1.setBackground(Background.fill(Color.rgb(150, 150, 150, 0.6)));
+		});
+		filterstraccsearch.getItems().add("Filter by:");
+		filterstraccsearch.setValue(filterstraccsearch.getItems().get(0));
+		filterstraccsearch.getItems().add("Service name");
+		filterstraccsearch.getItems().add("Username");
+		filterstraccsearch.getItems().add("Password");
 		
 		new Thread() {
 			
@@ -1140,6 +1112,7 @@ public class Controller extends EncryptionObj {
 					            
 					            //settings specific to each button
 					            straccprimarktochange = f;
+					            AddAccbutton1.setLayoutY(124);
 					            AddAccbutton1.setOnAction(actionevent -> {
 					            	try {ChangeAccountofStorage(actionevent);} catch (IOException | NoSuchAlgorithmException e) {e.printStackTrace();}
 					            	Timeline endblur = new Timeline(new KeyFrame(Duration.ZERO, new KeyValue(blur.radiusProperty(), 10)), new KeyFrame(Duration.millis(200), new KeyValue(blur.radiusProperty(), 0))); endblur.play();
@@ -1193,6 +1166,7 @@ public class Controller extends EncryptionObj {
 					            
 					            //settings specific to the button
 					            straccprimarktochange = f;
+					            AddAccbutton1.setLayoutY(38);
 					            AddAccbutton1.setOnAction(actionevent -> {
 					            	try {deleteaccountfromstorage(actionevent);} catch (IOException e) {e.printStackTrace();}
 					            	Timeline endblur = new Timeline(new KeyFrame(Duration.ZERO, new KeyValue(blur.radiusProperty(), 10)), new KeyFrame(Duration.millis(200), new KeyValue(blur.radiusProperty(), 0))); endblur.play();
@@ -1335,8 +1309,11 @@ public class Controller extends EncryptionObj {
 							storedaccountsanchorpane.setOnKeyPressed(event -> {
 								handleSmoothScrollKeyPressed(event, scrollpanewithtextf);
 							});
-							
 						}
+						
+						for(Node n : accountdisp.getChildren()) 
+							if(n instanceof Pane)
+							allstraccpanes.add((Pane)n);
 				});
 				
 				} catch(NullPointerException | SQLException | NoSuchAlgorithmException np_sql_nsa_murl_ioE) {np_sql_nsa_murl_ioE.printStackTrace();}
@@ -1351,8 +1328,9 @@ public class Controller extends EncryptionObj {
 	
 	//deletes a stracc
 	public void deleteaccountfromstorage(ActionEvent theactioneventofdel) throws IOException {
+		new Thread() {
+			public void run() {
 			try {
-				
 				int primarykeyfordeletingline = 0;
 				String tablename = "accstorage";
 				if(islocalacc) tablename = "accstoragelocal";
@@ -1366,10 +1344,15 @@ public class Controller extends EncryptionObj {
 					else f++;
 				}
 				mainrs.close();
-					connectionstmt.executeUpdate("DELETE FROM " + tablename + " WHERE primark=" + primarykeyfordeletingline);
+				connectionstmt.executeUpdate("DELETE FROM " + tablename + " WHERE primark=" + primarykeyfordeletingline);
+				
+				Platform.runLater(() -> {
 					deletetextfromdisp();
-					showaccounts();
-			} catch(SQLException | NoSuchAlgorithmException | IOException sqlE) {sqlE.printStackTrace();}
+					try {showaccounts();} catch (NoSuchAlgorithmException | IOException e) {e.printStackTrace();}
+				});
+			
+			} catch(SQLException sqlE) {sqlE.printStackTrace();}
+		}}.start();
 	}
 
 	//changes the details of the stracc
@@ -1573,6 +1556,43 @@ public class Controller extends EncryptionObj {
 			//precautions.setFill(Color.web("#a80000"));
 	}
 	
+	//every key typed will invoke this method, it will take all the vbox contents and filter through them.
+	public void searchstraccs() {
+		if(!straccsearch.getText().isEmpty()) {
+			//filterstraccsearch.getItems().add("Service name");
+			//filterstraccsearch.getItems().add("username");
+			//filterstraccsearch.getItems().add("password");
+		ArrayList<Pane> filtered = new ArrayList<Pane>();
+		ArrayList<Text> filteredtexts = new ArrayList<Text>();
+		Text texttemp; int whichtexttoapplyfilter;
+		switch(((String)filterstraccsearch.getValue())) {
+			case "Service name": whichtexttoapplyfilter = 0; break;
+			case "Username": whichtexttoapplyfilter = 1; break;
+			case "Pasword": whichtexttoapplyfilter = 2; break;
+			default: whichtexttoapplyfilter = 1; break;
+		}
+		for(Pane p : allstraccpanes) {
+			if((texttemp = ((Text)((TextFlow)p.getChildren().get(0)).getChildren().get(whichtexttoapplyfilter))).getText().contains(straccsearch.getText())) {
+				filtered.add(p);
+				filteredtexts.add(texttemp);
+			}
+		}
+		
+		deletetextfromdisp();
+		
+		for(Pane p : filtered) {
+			accountdisp.getChildren().add(p);
+			Line seperatorline = new Line();
+			seperatorline.setStartX(-670);
+			accountdisp.getChildren().add(seperatorline);
+		}
+		
+		} else {
+			deletetextfromdisp();
+			try {showaccounts();} catch (NoSuchAlgorithmException | IOException e) {e.printStackTrace();}
+		}
+	}
+	
 	//---------------------------------------------- SETTINGS --------------------------------------------------------
 	//################################################################################################################
 	//---------------------------------------------- SETTINGS --------------------------------------------------------
@@ -1620,7 +1640,7 @@ public class Controller extends EncryptionObj {
 						pstmt.setString(1, EncryptionObj.EncryptFuncHOUSAINIPASS(housaininewpassword.getText(), EncryptionObj.hashKey(housaininewpassword.getText())));
 						pstmt.setInt(2, currentheldID);
 						pstmt.execute();
-						temp2 = EncryptionObj.EncryptFuncHOUSAINIPASS(housaininewpassword.getText() + "E4Af3Sd@", EncryptionObj.hashKey(housaininewpassword.getText()));
+						temp2 = EncryptionObj.EncryptFuncHOUSAINIPASS(housaininewpassword.getText() + "E4Af3Sd@", EncryptionObj.hashKey(housaininewpassword.getText() + "38FfiGKBdl94994FOKSALL560870-GL12#$@(*(fkgkall34ltg)(r%**goADAdAZ*(h8)"));
 					}
 				}
 				
@@ -1696,10 +1716,18 @@ public class Controller extends EncryptionObj {
 							int mainrs = connectionstmt.executeUpdate("UPDATE accinfo SET username = " + "'" + housaininewpassword.getText() + "'" + " WHERE id = " + currentheldID + ";");
 							mainrs = connectionstmt.executeUpdate("UPDATE accinfo SET prevmonth = " + (currentpreviousmonth = LocalDate.now().getMonthValue()) + " WHERE id = " + currentheldID + ";");
 						} else {
-							PreparedStatement pstmt = connectionatt.prepareStatement("UPDATE accinfolocal SET username = ? WHERE id = ?");
-							pstmt.setString(1, housaininewpassword.getText());
-							pstmt.setInt(2, currentheldID);
-							pstmt.execute();
+							if(reqpass) {
+								PreparedStatement pstmt = connectionatt.prepareStatement("UPDATE accinfolocal SET username = ? WHERE id = ?");
+								pstmt.setString(1, housaininewpassword.getText());
+								pstmt.setInt(2, currentheldID);
+								pstmt.execute();
+							} else {
+								PreparedStatement pstmt = connectionatt.prepareStatement("UPDATE accinfolocal SET username = ?, password = ? WHERE id = ?");
+								pstmt.setString(1, housaininewpassword.getText());
+								pstmt.setString(2, EncryptionObj.EncryptFuncHOUSAINIPASS(housaininewpassword.getText() + "38FfiGKBdlAO56yh%3400bkg223KgoADAdAZ*(h8", EncryptionObj.hashKey(housaininewpassword.getText() + "49GKALLVB(12$$%%#glfoaS:DPFOrllgSDADW")));
+								pstmt.setInt(3, currentheldID);
+								pstmt.execute();
+							}
 						}
 						
 						statustext.setText("Username has been Updated!");
@@ -1711,7 +1739,7 @@ public class Controller extends EncryptionObj {
 						createpassbutton.setDisable(true);
 						sleep(3000);
 						statustext.setText("Current Username: " + currentusername);
-					} catch (SQLException | InterruptedException IE_sqlE) {
+					} catch (SQLException | InterruptedException | NoSuchAlgorithmException | InvalidKeySpecException IE_sqlE) {
 						IE_sqlE.printStackTrace();
 					}
 			
@@ -1727,17 +1755,18 @@ public class Controller extends EncryptionObj {
 		if(usersettings == null) usersettings = "0000000000";
 		statustext.setVisible(false);
 		reqselctoshowpass.setSelected(usersettings.charAt(0) == '1');
-		/*if(!reqpass) {
+		if(!reqpass) {
 			housaininewpassword.setDisable(true);
 			housainioldpassword.setDisable(true);
 			createpassbutton.setDisable(true);
-		}*/
+			statustext.setText("Password unchangeable");
+		}
 		resolutionselc.getItems().clear();
 		resolutionselc.getItems().add("0.5x (200x300)");
 		resolutionselc.getItems().add("1x (400x600)");
 		resolutionselc.getItems().add("1.5x (600x900)");
 		resolutionselc.getItems().add("2x (800x1200)");
-		
+		if(!reqpass && useroptions.charAt(2) == '0') delaccbutton.setDisable(true);
 		
 		f=new FileReader("settingsfile");
 		char[] inputfromf = new char[100];
@@ -1804,12 +1833,48 @@ public class Controller extends EncryptionObj {
 			
 	//deletes the account from accinfo/accinfolocal and all of its info in the accstorage
 	public void deleteAccount(ActionEvent e) throws SQLException, NoSuchAlgorithmException, InvalidKeySpecException {
-			ResultSet mainrs = connectionstmt.executeQuery("SELECT id, password FROM accinfo WHERE id = " + currentheldID);
-			mainrs.next();
-			TextInputDialog td = new TextInputDialog("Password");
-			td.setHeaderText("Deleting the Account will delete all the saved data of the stored accounts, and will be unrecoverable." + '\n' + "To confirm deletion, Enter in your password");
-			td.showAndWait();
-			if(EncryptionObj.EncryptFuncHOUSAINIPASS(td.getEditor().getText(), EncryptionObj.hashKey(td.getEditor().getText())).equals(mainrs.getString("password"))) {
+		if(!islocalacc || reqpass ||islocalacc && useroptions.charAt(2) == '1') {
+		String tablename = islocalacc ? "accinfolocal" : "accinfo";
+		ResultSet mainrs = connectionstmt.executeQuery("SELECT id, password FROM "+tablename+" WHERE id = " + currentheldID);
+		mainrs.next();
+		TextInputDialog td = new TextInputDialog("Password");
+		
+			if(!islocalacc || reqpass) {
+				td.setHeaderText("Deleting the Account will delete all the saved data of the stored accounts, and will be unrecoverable." + '\n' + "To confirm deletion, Enter in your password");
+				td.showAndWait();
+				if(EncryptionObj.EncryptFuncHOUSAINIPASS(td.getEditor().getText(), EncryptionObj.hashKey(td.getEditor().getText())).equals(mainrs.getString("password"))) {
+					Parent root = null;
+					try{root = FXMLLoader.load(getClass().getResource("/loginscreen.fxml"));} catch (IOException ioe) {ioe.printStackTrace();}
+					stage = (Stage)((Node)e.getSource()).getScene().getWindow();
+					scene = new Scene(root);
+					scene.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
+					stage.setScene(scene); stage.show();
+					new Thread() {
+						public void run() {
+							try {
+								if(!islocalacc) {
+									connectionstmt.executeUpdate("DELETE FROM accstorage WHERE id = " + currentheldID);
+									connectionstmt.executeUpdate("DELETE FROM accinfo WHERE id = " + currentheldID);
+								} else {
+									PreparedStatement pstmt1 = connectionatt.prepareStatement("DELETE FROM accstoragelocal WHERE id = " + currentheldID);
+									PreparedStatement pstmt2 = connectionatt.prepareStatement("DELETE FROM accinfolocal WHERE id = " + currentheldID);
+									pstmt1.execute();
+									pstmt2.execute();
+								}
+								usersettings = null;
+								currentusername = null;
+							} catch (SQLException e) {e.printStackTrace();}
+						}
+					}.start();
+				} else {
+					Alert wrongpassword = new Alert(AlertType.ERROR);
+					wrongpassword.setHeaderText("Wrong Password" + '\n' + "Account not deleted");
+					wrongpassword.showAndWait();
+				}
+			} else {
+				td.setHeaderText("Deleting the Account will delete all the saved data of the stored accounts, and will be unrecoverable." + '\n' + "To confirm deletion, write 'confirm'");
+				Optional<String> res = td.showAndWait();
+				if(res.isPresent() && td.getResult().equals("confirm")) {
 				Parent root = null;
 				try{root = FXMLLoader.load(getClass().getResource("/loginscreen.fxml"));} catch (IOException ioe) {ioe.printStackTrace();}
 				stage = (Stage)((Node)e.getSource()).getScene().getWindow();
@@ -1819,29 +1884,16 @@ public class Controller extends EncryptionObj {
 				new Thread() {
 					public void run() {
 						try {
-							if(!islocalacc) {
-								int updatedb = connectionstmt.executeUpdate("DELETE FROM accstorage WHERE id = " + currentheldID);
-								int updatedb2 = connectionstmt.executeUpdate("DELETE FROM accinfo WHERE id = " + currentheldID);
-							} else {
-								PreparedStatement pstmt1 = connectionatt.prepareStatement("DELETE FROM accstoragelocal WHERE id = " + currentheldID);
-								PreparedStatement pstmt2 = connectionatt.prepareStatement("DELETE FROM accinfolocal WHERE id = " + currentheldID);
-								pstmt1.execute();
-								pstmt2.execute();
-							}
-							usersettings = null;
-							currentusername = null;
-						} catch (SQLException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
+								connectionstmt.executeUpdate("DELETE FROM accstoragelocal WHERE id = " + currentheldID);
+								connectionstmt.executeUpdate("DELETE FROM accinfolocal WHERE id = " + currentheldID);
+								usersettings = null;
+								currentusername = null;
+							} catch (SQLException e) {e.printStackTrace();}
 						}
-					}
-				}.start();
-				
-			} else {
-				Alert wrongpassword = new Alert(AlertType.ERROR);
-				wrongpassword.setHeaderText("Wrong Password" + '\n' + "Account not deleted");
-				wrongpassword.showAndWait();
+					}.start();
+				}
 			}
+			} 
 		}
 		
 	//sets up the other pane (change pass / change username, depending on whats opened currently) and animates it
@@ -1870,7 +1922,7 @@ public class Controller extends EncryptionObj {
 						statustext.setFill(Color.RED);
 						statustext.setText("already changed username this month (" + currentusername + ")");
 					}
-					if(islocalacc && useroptions.charAt(1) == '0') {
+					if(!reqpass && useroptions.charAt(1) == '0') {
 						createpassbutton.setDisable(true);
 						housaininewpassword.setDisable(true);
 						statustext.setFill(Color.RED);
@@ -1894,7 +1946,7 @@ public class Controller extends EncryptionObj {
 						changepass(event2);
 					});
 					changeusername.setText("Change Username");
-					if(useroptions.charAt(0) == '0') {
+					if(!reqpass && useroptions.charAt(0) == '0') {
 						createpassbutton.setDisable(true);
 						housaininewpassword.setDisable(true);
 						housainioldpassword.setDisable(true);
@@ -2362,30 +2414,6 @@ public class Controller extends EncryptionObj {
 			uservbox.getChildren().add(addPane);
 	}
 	
-	private double calculateAngle(Pane node, MouseEvent event) {
-        // Get the center coordinates of the VBox
-        double centerX = node.getLayoutX() + node.getTranslateX() + node.getWidth() / 2.0;
-        double centerY = node.getLayoutY() + node.getTranslateY() + node.getHeight() / 2.0;
-
-        // Get the mouse coordinates
-        double mouseX = event.getX();
-        double mouseY = event.getY();
-
-        // Calculate the difference in coordinates
-        double deltaX = mouseX - centerX;
-        double deltaY = mouseY - centerY;
-        
-        Line line = new Line();
-        line.setStartX(mouseX);
-        line.setStartY(mouseY);
-        line.setEndX(deltaX);
-        line.setEndY(deltaY);
-        mainanchorpane.getChildren().add(line);
-
-        // Calculate the angle using Math.atan2
-        return Math.atan2(deltaY, deltaX);
-    }
-	
 	private double calculateAngle(Node node, MouseEvent event) {
 	    // Get the center coordinates of the Node
 	    Bounds bounds = node.localToScene(node.getBoundsInLocal());
@@ -2433,6 +2461,18 @@ public class Controller extends EncryptionObj {
 			break;
         }
 	}
+	
+	public static ArrayList<Integer> getCharacterIndexes(String str, String substr) {
+        ArrayList<Integer> indexes = new ArrayList<>();
+        int index = str.indexOf(substr);
+        while (index >= 0) {
+            for (int i = 0; i < substr.length(); i++) {
+                indexes.add(index + i);
+            }
+            index = str.indexOf(substr, index + 1);
+        }
+        return indexes;
+    }
 }
 
 /*

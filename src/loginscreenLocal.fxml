@@ -75,11 +75,6 @@
             <Font name="System Bold" size="19.0" />
          </font>
       </PasswordField>
-      <Text fx:id="loginwithhousainiacctext" fill="#6276fc" layoutX="5.0" layoutY="349.0" onMouseClicked="#signuptohousainiaccTEXT" strokeType="OUTSIDE" strokeWidth="0.0" text="Login with Housaini Account">
-         <font>
-            <Font name="System Bold" size="19.0" />
-         </font>
-      </Text>
       <Pane layoutY="356.0" prefHeight="44.0" prefWidth="600.0" style="-fx-background-color: #CACACA;">
          <children>
             <ProgressIndicator fx:id="passtimeindicator" disable="true" layoutX="548.0" layoutY="2.0" opacity="0.0" prefHeight="40.0" prefWidth="38.0">
