@@ -28,7 +28,7 @@ import org.apache.logging.log4j.Logger;
 
 public class Main extends Application {
 	
-	protected static final Logger logger = LogManager.getLogger(Main.class);
+	
 	
 	@Override
 	public void start(Stage primaryStage) {
@@ -50,6 +50,7 @@ public class Main extends Application {
 			FileReader f = new FileReader("settingsfile");
 			char[] settingsfiletext = new char[1000];
 			f.read(settingsfiletext);
+			f.close();
 			if(settingsfiletext[0] == '2') {
 				
 				root.setPrefHeight(600); root.setPrefWidth(900);
@@ -103,6 +104,5 @@ public class Main extends Application {
 	
 	public static void main(String[] args) {
 		launch(args);
-		
 	}
 }

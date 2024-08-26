@@ -19,6 +19,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.sql.Connection;
@@ -130,6 +131,13 @@ import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.appender.ConsoleAppender;
+import org.apache.logging.log4j.core.appender.FileAppender;
+import org.apache.logging.log4j.core.config.Configuration;
+import org.apache.logging.log4j.core.layout.PatternLayout;
 
 public class Controller extends EncryptionObj {
 	
@@ -177,6 +185,7 @@ public class Controller extends EncryptionObj {
 	@FXML
 	private ImageView settingsimagelocal, settingsimageadmin;
 	private static FileReader f;
+	private DatabaseFileHandler dbfHandler;
 	
 	FileWriter writer;
 	boolean canthreadrunagain = true, setactivepassrequired, changecolorofselc, createorchange;
@@ -199,6 +208,10 @@ public class Controller extends EncryptionObj {
 	static ArrayList<Text> usernametexts = new ArrayList<Text>();
 	static ArrayList<Node> allnodesofvbox = new ArrayList<Node>();
 	static ArrayList<Pane> tempsavedaccpanes = new ArrayList<Pane>();
+	
+	//ALL THAT WHICH IS FOR LOGGING
+	boolean advancedlogging = true;
+	protected static final Logger logger = LogManager.getLogger();
 	
 	// Log in/Create Housaini account
 	public void loginorcreatePassSeperate(ActionEvent e) throws NoSuchAlgorithmException, IOException, SQLException {
@@ -295,7 +308,7 @@ public class Controller extends EncryptionObj {
 							    @Override
 							    public void run() {
 							    	Parent root = null;
-									try{root = FXMLLoader.load(getClass().getResource("/PasswordManagerMain.fxml"));} catch (IOException e) {e.printStackTrace();}
+									try{root = FXMLLoader.load(getClass().getResource(File.separatorChar + "PasswordManagerMain.fxml"));} catch (IOException e) {e.printStackTrace();}
 									stage = (Stage)((Node)e.getSource()).getScene().getWindow();
 									scene = new Scene(root);
 									scene.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
@@ -321,7 +334,6 @@ public class Controller extends EncryptionObj {
 		
 		if(connectionatt != null) {
 		ResultSet mainrs = connectionstmt.executeQuery("SELECT * FROM hpmgeneralsettings WHERE primark = 1;");
-		//mainrs.next();
 		String automaticDBbackuplocation = null;
 		
 		if(mainrs.getBoolean("allowautodbbackup")) {
@@ -431,11 +443,14 @@ public class Controller extends EncryptionObj {
 		
 		if(!accsearch.getText().isEmpty()) {
 			ArrayList<Pane> searchedaccpanes = new ArrayList<Pane>();
-		for(Node child : tempsavedaccpanes)
-			if(((Text)((Pane)child).getChildren().get(2)).getText().toString().contains(accsearch.getText()))
-				searchedaccpanes.add((Pane)child);
-		uservbox.getChildren().clear();
-		for(Node child : searchedaccpanes) uservbox.getChildren().add(child);
+		
+			for(Node child : tempsavedaccpanes)
+				if(((Text)((Pane)child).getChildren().get(2)).getText().toString().contains(accsearch.getText()))
+					searchedaccpanes.add((Pane)child);
+			uservbox.getChildren().clear();
+		
+			for(Node child : searchedaccpanes) 
+				uservbox.getChildren().add(child);
 		} else {
 			loadaccounts();
 		}
@@ -444,24 +459,24 @@ public class Controller extends EncryptionObj {
 
 	//Invoked upon initalization of any scene
 	public void initialize() {
+		
 		try {
 			if(islocalacc) {
 				connectionatt.close();
 				connectionatt = DriverManager.getConnection("jdbc:sqlite:accdb");
 				DatabaseMetaData meta = connectionatt.getMetaData();
-				System.out.println("The driver name is " + meta.getDriverName());
 				connectionstmt = connectionatt.createStatement();
 				
 				ResultSet localaccountrs = connectionstmt.executeQuery("SELECT * FROM hpmgeneralsettings WHERE primark = 1;");
 				
 				if(isadmin) allowautodbbackup.setSelected(localaccountrs.getBoolean("allowautodbbackup"));
 				localaccountrs.close();
+				logger.info("Successfully connected to local database");
 			}
 			
-			settingsimagelocal.setImage(new Image("settingsicon.png"));
-			settingsimageadmin.setImage(new Image("settingsicon.png"));
+			settingsimagelocal.setImage(new Image(File.separatorChar + "settingsicon.png"));
+			settingsimageadmin.setImage(new Image(File.separatorChar + "settingsicon.png"));
 			
-			System.out.println(isadmin);
 			if(!isadmin) {
 				maintabpane.getTabs().remove(5);
 				maintabpane.getTabs().remove(3);
@@ -472,13 +487,15 @@ public class Controller extends EncryptionObj {
 				maintabpane.getTabs().remove(0);
 			}
 			
-		} catch(Exception e) {
-			e.printStackTrace();
+		} catch(SQLException se) {
+			SQLExceptionHandlerLogger(se, null);
+		} catch(NullPointerException ne) {
+			logger.error("Could not find settingsicon.png");
 		}
+		
 		if(loadlocalaccounts) {
-		loadaccounts();
+			loadaccounts();
 		}
-		System.out.println("Executed");
 	}
 	
 	static ArrayList<String> tempusernames = new ArrayList<String>();
@@ -617,9 +634,12 @@ public class Controller extends EncryptionObj {
 				temppasswords.clear();
 			}});
 				
-		} catch(SQLException | NoSuchAlgorithmException | InvalidKeySpecException e) {
-			e.printStackTrace();
+		} catch(SQLException sqle) {
+			SQLExceptionHandlerLogger(sqle, null);
+		} catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+			logger.error("Failed Encryption, ", e);
 		}
+		
 		}
 		}.start();
 							
@@ -630,6 +650,7 @@ public class Controller extends EncryptionObj {
 	public void createorlogintolocalAcc(ActionEvent e) {
 			
 			new Thread() {
+				String input_errorable;
 				public void run() {
 					try {
 					boolean allow = true;
@@ -651,13 +672,13 @@ public class Controller extends EncryptionObj {
 						if(createpassbutton.getText().equals("Create Account")) {
 							ResultSet mainrs = connectionstmt.executeQuery("SELECT id, password, username FROM accinfolocal");
 							while(mainrs.next()) {
-								if(housainiusername.getText().equals(mainrs.getString("username"))) {
+								if((input_errorable = housainiusername.getText()).equals(mainrs.getString("username"))) {
 									allow = false;
 									break;
 								}
 							}
 							if(allow) {
-//When you unselect the reqpasswordcheckbox, a menu appears with 3 other checkboxes, this will save them to the DB
+								//When you unselect the reqpasswordcheckbox, a menu appears with 3 other checkboxes, this will save them to the DB
 								
 								boolean[] booleansofaccountoptions = {makepasswordchangeablecheckbox.isSelected(), makeusernamechangeablecheckbox.isSelected(), makeaccountdeletablecheckbox.isSelected()};
 								StringBuilder strb = new StringBuilder("000");
@@ -675,6 +696,7 @@ public class Controller extends EncryptionObj {
 							
 							accerrorlabel.setFill(Color.BLACK);
 							accerrorlabel.setText("Created account: " + housainiusername.getText());
+							logger.info("Local account was created: " + housainiusername.getText());
 							animateboop(accerrorlabel);
 							
 							Platform.runLater(new Runnable() {
@@ -723,26 +745,27 @@ public class Controller extends EncryptionObj {
 								
 								} else if(rs.getString("adminpass").equals(EncryptionObj.EncryptFuncHOUSAINIPASS(housainipassword.getText(), EncryptionObj.hashKey(housainipassword.getText())))) {
 									
-									//animateboop(accerrorlabel);
 									isadmin = true;
 									
 									Platform.runLater(new Runnable() {
 										@Override
 										public void run() {
 											double[] exponents = {0.167,0.25,-0.5};
-											LoadScene("/PasswordManagerMain.fxml", uservbox, exponents);
+											LoadScene(File.separatorChar + "PasswordManagerMain.fxml", uservbox, exponents);
 										}
 									});
 									
 								//3. ADMIN LOGIN THIRD CASE: Admin Login Credentials are Incorrect
 									
 								} else if(!rs.getString("adminpass").equals(EncryptionObj.EncryptFuncHOUSAINIPASS(housainipassword.getText(), EncryptionObj.hashKey(housainipassword.getText())))) {
-									/*accerrorlabel.setFill(Color.RED);
-									accerrorlabel.setText("Admin Login Credentials are Incorrect");
+									accerrorlabel.setFill(Color.RED);
+									accerrorlabel.setText("Incorrect: Wait some time and try again");
 									animateboop(accerrorlabel);
+									createpassbutton.setDisable(true);
 									sleep(5000);
+									createpassbutton.setDisable(false);
 									accerrorlabel.setFill(Color.BLACK);
-									accerrorlabel.setText("");*/
+									accerrorlabel.setText("");
 								}
 							
 							}
@@ -783,7 +806,7 @@ public class Controller extends EncryptionObj {
 									@Override
 									public void run() {
 										double[] exponents = {0.167,0.25,-0.5};
-										LoadScene("/PasswordManagerMain.fxml", uservbox, exponents);
+										LoadScene(File.separatorChar + "PasswordManagerMain.fxml", uservbox, exponents);
 									}
 								});
 							} else {
@@ -795,15 +818,11 @@ public class Controller extends EncryptionObj {
 						}
 					}
 					
-					} catch (SQLException | NoSuchAlgorithmException | InvalidKeySpecException | InterruptedException sql_nsa_iks_ie) {
-						sql_nsa_iks_ie.printStackTrace();
-						accerrorlabel.setText("Something went wrong");
+					} catch (SQLException sqle) {
+						SQLExceptionHandlerLogger(sqle, input_errorable);
+					} catch(NoSuchAlgorithmException | InvalidKeySpecException | InterruptedException nsa_iks_ie) {
+						logger.error("An error occured due to Encryption issues or an Interruption in the thread: ", nsa_iks_ie);
 					}
-					
-					/*createpassbutton.setDisable(false);
-					acclistpane.setDisable(false);
-					reqpasswordcheckbox.setDisable(false);*/
-					
 				}
 			}.start();
 		}
@@ -830,7 +849,6 @@ public class Controller extends EncryptionObj {
 	public void localdbbackup(ActionEvent e) {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Back up Database");
-        //fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("SQLite Database Files", "*.db"));
         
         File file = fileChooser.showSaveDialog((Stage)((Node)e.getSource()).getScene().getWindow());
         if (file != null) {
@@ -901,7 +919,7 @@ public class Controller extends EncryptionObj {
 			@Override
 			public void run() {
 				double[] exponents = {0.167,0.25,-0.5};
-				LoadScene("/loginscreen.fxml", mainanchorpane, exponents);
+				LoadScene(File.separatorChar + "loginscreen.fxml", mainanchorpane, exponents);
 			}
 		});
 	}
@@ -1826,7 +1844,7 @@ public class Controller extends EncryptionObj {
 			}
 			
 			double[] exponents = {0.167,0.25,-0.5};
-			AnchorPane root = LoadScene("/PasswordManagerMain.fxml", applysettingsbutton, exponents);
+			AnchorPane root = LoadScene(File.separatorChar + "PasswordManagerMain.fxml", applysettingsbutton, exponents);
 			((TabPane)((AnchorPane)(root.getChildren().getFirst())).getChildren().getFirst()).getSelectionModel().select(3);
 			
 		}
@@ -2127,7 +2145,7 @@ public class Controller extends EncryptionObj {
 	// ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 	//---------------------------------------------- MISCELLANEOUS -------------------------------------------------------
 
-	public void signuptolocalaccTEXT() {
+	public void signuptolocalaccTEXT() throws IOException, InterruptedException {
 		
 		try {
 			
@@ -2135,6 +2153,18 @@ public class Controller extends EncryptionObj {
 			DatabaseMetaData meta = connectionatt.getMetaData();
 			System.out.println("The driver name is " + meta.getDriverName());
 			connectionstmt = connectionatt.createStatement();
+			File f = new File(getDatabasePath(connectionatt));
+			
+			//ProcessBuilder processBuilder = new ProcessBuilder("chown", "root:root", f.toPath().toString());
+            //processBuilder.inheritIO(); // To see any output/errors from the command
+            //Process process = processBuilder.start();
+            //process.waitFor();
+            //if (process.exitValue() == 0) {
+            //    System.out.println("File ownership changed to root successfully.");
+            //} else {
+            //    System.out.println("Failed to change file ownership. Exit code: " + process.exitValue());
+            //}
+            
 			connectionstmt.execute("CREATE TABLE IF NOT EXISTS accinfolocal(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, password VARCHAR(3000), username VARCHAR(30), settings VARCHAR(10), usersettings VARCHAR(10), usercolor VARCHAR(7));");
 			connectionstmt.execute("CREATE TABLE IF NOT EXISTS accstoragelocal(primark INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, id INTEGER NOT NULL, servicename VARCHAR(5000), username VARCHAR(5000), password VARCHAR(5000));");
 			connectionstmt.execute("CREATE TABLE IF NOT EXISTS hpmgeneralsettings(primark INTEGER NOT NULL PRIMARY KEY, databasebackupfilelocation VARCHAR(5000), allowautodbbackup BOOLEAN, adminpass VARCHAR(5000));");
@@ -2145,7 +2175,7 @@ public class Controller extends EncryptionObj {
 			loadlocalaccounts = true;
 			
 			double[] exponents = {0.25,0.5,-0.25};
-			LoadScene("/loginscreenLocal.fxml", loginwithlocalacctext, exponents);
+			LoadScene(File.separatorChar + "loginscreenLocal.fxml", loginwithlocalacctext, exponents);
 		
 		} catch(SQLException sqle) {
 			sqle.printStackTrace();
@@ -2157,12 +2187,10 @@ public class Controller extends EncryptionObj {
 		/*Platform.runLater(new Runnable() {
 		    @Override
 		    public void run() {*/
-		if(scenename.equals("/PasswordManagerMain.fxml")) loadlocalaccounts = false;
+		if(scenename.equals(File.separatorChar + "PasswordManagerMain.fxml")) loadlocalaccounts = false;
 		    	try {
 		    	AnchorPane root = null;
-				try{root = (AnchorPane)FXMLLoader.load(getClass().getResource(scenename));
-				//FXMLLoader.load(getClass().getResource(scenename));
-				} catch (IOException ioe) {ioe.printStackTrace();}
+		    	root = (AnchorPane)FXMLLoader.load(getClass().getResource(scenename));
 				
 				
 				
@@ -2196,10 +2224,10 @@ public class Controller extends EncryptionObj {
 				
 				stage = (Stage)nodetouse.getScene().getWindow();
 				scene = new Scene(root);
-				scene.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
+				//scene.getStylesheets().add(getClass().getResource(File.separatorChar + "application.css").toExternalForm());
 				stage.setScene(scene); stage.show(); //maintabpane.setOpacity(0);
 				return root;
-		    	} catch (IOException e) {e.printStackTrace();}
+		    	} catch (Exception e) {e.printStackTrace();}
 		    	return null;
 		    }
 
@@ -2238,7 +2266,7 @@ public class Controller extends EncryptionObj {
 		DateTimeFormatter customFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
         String formattedTimeCustom = currenttimeforbackup.format(customFormatter);
         
-		String filename = "/accdb BACKUP - " + LocalDate.now() + " - " + formattedTimeCustom;
+		String filename = File.separatorChar + "accdb BACKUP - " + LocalDate.now() + " - " + formattedTimeCustom;
         File sourceFile = new File(sourcePath);
         File destFile = new File(destPath + filename);
         
@@ -2401,7 +2429,7 @@ public class Controller extends EncryptionObj {
 		});
 		adminaccpane.setPrefHeight(52);
 		adminaccpane.setBackground(Background.fill(Color.web("#4682db", 0.33)));
-		ImageView adminicon = new ImageView("/setting.png");
+		ImageView adminicon = new ImageView(File.separatorChar + "setting.png");
 		adminicon.setFitWidth(47);
 		adminicon.setFitHeight(51);
 		adminicon.setLayoutX(4);
@@ -2473,6 +2501,39 @@ public class Controller extends EncryptionObj {
         }
         return indexes;
     }
+	
+	private void SQLExceptionHandlerLogger(SQLException sqle, String input) {
+		String sqlState = sqle.getSQLState();
+	    switch (sqlState) {
+	        case "08000":
+	            logger.error("08000: Failed to connect to Database, Check your internet connection, otherwise HPM Server is down");
+	            break;
+	        case "08003":
+	            logger.error("08003: Failed to modify data in local Database due to an invalid/closed connection with it");
+	            break;
+	        case "08006":
+	        	logger.error("08006: Connection with Database failed while trying modifying data");
+	            break;
+	        case "22000":
+	        	logger.error("22000: Invalid data type " + input);
+	            break;
+	        case "22001":
+	        	logger.error("22001: User put in " + input + ", this string is too long");
+	            break;
+	        case "23000":
+	        	logger.error("23000: Integrity Constraint Violation");
+	            break;
+	        case "23502":
+	        	logger.error("23502: NOT NULL Violation");
+	            break;
+	        case "40001":
+	        	logger.error("40001: Trying to modify data when there is already a concurrent modification happening from another source");
+	            break;
+	        default:
+	            break;
+	    }
+	    if(advancedlogging) logger.error("Full Stacktrace: ", sqle);
+	}
 }
 
 /*
