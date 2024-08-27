@@ -163,7 +163,9 @@ public class Controller extends EncryptionObj {
 	@FXML
 	private ChoiceBox resolutionselc, filterstraccsearch;
 	@FXML
-	private CheckBox reqselctoshowpass, reqpasswordcheckbox, makeusernamechangeablecheckbox, makepasswordchangeablecheckbox, makeaccountdeletablecheckbox, allowautodbbackup;
+	private CheckBox reqselctoshowpass, reqpasswordcheckbox, makeusernamechangeablecheckbox, makepasswordchangeablecheckbox, makeaccountdeletablecheckbox;
+	@FXML
+	protected CheckBox allowautodbbackup;
 	@FXML
 	private Stage stage;
 	@FXML
@@ -185,7 +187,6 @@ public class Controller extends EncryptionObj {
 	@FXML
 	private ImageView settingsimagelocal, settingsimageadmin;
 	private static FileReader f;
-	private DatabaseFileHandler dbfHandler;
 	
 	FileWriter writer;
 	boolean canthreadrunagain = true, setactivepassrequired, changecolorofselc, createorchange;
@@ -196,8 +197,8 @@ public class Controller extends EncryptionObj {
 	private static String servicestr = "", namestr = "", passwordstr = "", usersettings, useroptions, temp, temp2;
 	private static List<Text> txtlist = new ArrayList<Text>();
 	private static List<String> passwordlist = new ArrayList<String>();
-	private static Connection connectionatt;
-	private static Statement connectionstmt;//DriverManager.getConnection("jdbc:mysql://localhost/accdb?", "acc", "2994mYsQl#");
+	protected static Connection connectionatt;
+	protected static Statement connectionstmt;//DriverManager.getConnection("jdbc:mysql://localhost/accdb?", "acc", "2994mYsQl#");
 	
 	ArrayList<FadeTransition> ftlistENTER = new ArrayList<FadeTransition>();
 	ArrayList<TranslateTransition> ttlistENTER = new ArrayList<TranslateTransition>();
@@ -210,7 +211,7 @@ public class Controller extends EncryptionObj {
 	static ArrayList<Pane> tempsavedaccpanes = new ArrayList<Pane>();
 	
 	//ALL THAT WHICH IS FOR LOGGING
-	boolean advancedlogging = true;
+	protected static boolean advancedlogging = true;
 	protected static final Logger logger = LogManager.getLogger();
 	
 	// Log in/Create Housaini account
@@ -338,7 +339,7 @@ public class Controller extends EncryptionObj {
 		
 		if(mainrs.getBoolean("allowautodbbackup")) {
 			automaticDBbackuplocation = mainrs.getString("databasebackupfilelocation");
-			backupDatabasestatic("accdb", automaticDBbackuplocation);
+			DatabaseFileHandler.backupDatabasestatic("accdb", automaticDBbackuplocation);
 		}
 		
 		connectionatt.close();
@@ -398,7 +399,7 @@ public class Controller extends EncryptionObj {
 						 if(allow){
 							connectionstmt.execute("INSERT INTO accinfo(password, username, prevmonth, settings) VALUES('" + EncryptionObj.EncryptFuncHOUSAINIPASS(housainipassword.getText(), EncryptionObj.hashKey(housainipassword.getText())) + "','" + housainiusername.getText() + "'," + LocalDate.now().getMonthValue() +",'0000000000');");
 							
-							animateboop(accerrorlabel);
+							AnimationHandler.animateboop(accerrorlabel);
 							accerrorlabel.setOpacity(1);
 							accerrorlabel.setText("Account Created!");
 							try {sleep(3000);} catch (InterruptedException e) {}
@@ -440,21 +441,15 @@ public class Controller extends EncryptionObj {
 	
 	//Local account: allows searching through the local accounts on the login screen
 	public void accsearchonsearch() {
-		
 		if(!accsearch.getText().isEmpty()) {
 			ArrayList<Pane> searchedaccpanes = new ArrayList<Pane>();
-		
-			for(Node child : tempsavedaccpanes)
-				if(((Text)((Pane)child).getChildren().get(2)).getText().toString().contains(accsearch.getText()))
-					searchedaccpanes.add((Pane)child);
+			for(Pane localaccountpane : tempsavedaccpanes) { //tempsavedaccpanes is renewed every time loadaccounts is called
+				if(((Text)localaccountpane.getChildren().get(2)).getText().contains(accsearch.getText())) //extracts the text object from each pane and compares its text with what the user has searched for
+					searchedaccpanes.add(localaccountpane);
+			}
 			uservbox.getChildren().clear();
-		
-			for(Node child : searchedaccpanes) 
-				uservbox.getChildren().add(child);
-		} else {
-			loadaccounts();
-		}
-		
+			for(Node child : searchedaccpanes) uservbox.getChildren().add(child);
+		} else loadaccounts();
 	}
 
 	//Invoked upon initalization of any scene
@@ -464,11 +459,9 @@ public class Controller extends EncryptionObj {
 			if(islocalacc) {
 				connectionatt.close();
 				connectionatt = DriverManager.getConnection("jdbc:sqlite:accdb");
-				DatabaseMetaData meta = connectionatt.getMetaData();
 				connectionstmt = connectionatt.createStatement();
 				
 				ResultSet localaccountrs = connectionstmt.executeQuery("SELECT * FROM hpmgeneralsettings WHERE primark = 1;");
-				
 				if(isadmin) allowautodbbackup.setSelected(localaccountrs.getBoolean("allowautodbbackup"));
 				localaccountrs.close();
 				logger.info("Successfully connected to local database");
@@ -527,11 +520,9 @@ public class Controller extends EncryptionObj {
 											
 			for(int i = 0; i < tempusernames.size(); i++) {
 				String usercolor = tempusercolors.get(i);
-				String usernameTEMP = tempusernames.get(i);
 											
 				accpanes.add(new Pane());
 				Circle circle = new Circle();
-											
 				Stop[] stops = new Stop[] {new Stop(0, Color.web(usercolor).deriveColor(1,1,1.5,1)), new Stop(1, Color.web(usercolor).deriveColor(1, 1, 0.5, 1))};
 				LinearGradient lg1 = new LinearGradient(0, 0, 1, 1, true, CycleMethod.NO_CYCLE, stops);
 				Text logintext = new Text("Log in");
@@ -655,16 +646,9 @@ public class Controller extends EncryptionObj {
 					try {
 					boolean allow = true;
 					
-					if(housainiusername.getText().isEmpty() && !housainiusername.isDisabled()) { animateshake(housainiusername); allow = false; }
+					allow = ValidationHandler.ValidateInputofTextField(housainiusername, accerrorlabel, false, 30) && ValidationHandler.ValidateInputofTextField(housainipassword, accerrorlabel, false, 3000);
 					
-					if(housainipassword.getText().isEmpty() && reqpasswordcheckbox.isSelected()) { animateshake(housainipassword); allow = false; } 
-					
-					if(!allow) {
-						accerrorlabel.setOpacity(1);
-						accerrorlabel.setText("Missing Information");
-						accerrorlabel.setFill(Color.RED);
-						animateboop(accerrorlabel);
-					} else {
+					if(allow) {
 						
 //----------------------------------------------------------------------------------------------------------------------
 											//FIRST CASE: Creating an Account
@@ -679,7 +663,6 @@ public class Controller extends EncryptionObj {
 							}
 							if(allow) {
 								//When you unselect the reqpasswordcheckbox, a menu appears with 3 other checkboxes, this will save them to the DB
-								
 								boolean[] booleansofaccountoptions = {makepasswordchangeablecheckbox.isSelected(), makeusernamechangeablecheckbox.isSelected(), makeaccountdeletablecheckbox.isSelected()};
 								StringBuilder strb = new StringBuilder("000");
 								
@@ -689,29 +672,30 @@ public class Controller extends EncryptionObj {
 									if(booleansofaccountoptions[2]) strb.setCharAt(2, '1');
 								}
 								
-							if(reqpasswordcheckbox.isSelected())
-								connectionstmt.execute("INSERT INTO accinfolocal(password, username, settings, usercolor, usersettings) VALUES('" + EncryptionObj.EncryptFuncHOUSAINIPASS(housainipassword.getText(), EncryptionObj.hashKey(housainipassword.getText())) + "','" + housainiusername.getText() + "','0000000000','" + toHexString(usercolorpicker.getValue()) + "','" + strb.toString() + "');");
-							else
-								connectionstmt.execute("INSERT INTO accinfolocal(password, username, settings, usercolor, usersettings) VALUES('" + EncryptionObj.EncryptFuncHOUSAINIPASS(housainiusername.getText() + "38FfiGKBdlAO56yh%3400bkg223KgoADAdAZ*(h8", EncryptionObj.hashKey(housainiusername.getText() + "49GKALLVB(12$$%%#glfoaS:DPFOrllgSDADW")) + "','" + housainiusername.getText() + "','0000000000','" + toHexString(usercolorpicker.getValue()) + "','" + strb.toString() + "');");	
+								if(reqpasswordcheckbox.isSelected())
+									connectionstmt.execute("INSERT INTO accinfolocal(password, username, settings, usercolor, usersettings) VALUES('" + EncryptionObj.EncryptFuncHOUSAINIPASS(housainipassword.getText(), EncryptionObj.hashKey(housainipassword.getText())) + "','" + housainiusername.getText() + "','0000000000','" + toHexString(usercolorpicker.getValue()) + "','" + strb.toString() + "');");
+								else
+									connectionstmt.execute("INSERT INTO accinfolocal(password, username, settings, usercolor, usersettings) VALUES('" + EncryptionObj.EncryptFuncHOUSAINIPASS(housainiusername.getText() + "38FfiGKBdlAO56yh%3400bkg223KgoADAdAZ*(h8", EncryptionObj.hashKey(housainiusername.getText() + "49GKALLVB(12$$%%#glfoaS:DPFOrllgSDADW")) + "','" + housainiusername.getText() + "','0000000000','" + toHexString(usercolorpicker.getValue()) + "','" + strb.toString() + "');");	
 							
-							accerrorlabel.setFill(Color.BLACK);
-							accerrorlabel.setText("Created account: " + housainiusername.getText());
-							logger.info("Local account was created: " + housainiusername.getText());
-							animateboop(accerrorlabel);
+								accerrorlabel.setFill(Color.BLACK);
+								accerrorlabel.setText("Created account: " + housainiusername.getText());
+								logger.info("Local account was created: " + housainiusername.getText());
+								AnimationHandler.animateboop(accerrorlabel);
 							
-							Platform.runLater(new Runnable() {
+								Platform.runLater(new Runnable() {
 								public void run() {
 									loadaccounts();
 									reqpasswordcheckbox.setSelected(true);
 									requirespassword(new ActionEvent());
 								}});
-									housainiusername.clear();
-									housainipassword.clear();
-									makepasswordchangeablecheckbox.setSelected(false); makeusernamechangeablecheckbox.setSelected(false); makeaccountdeletablecheckbox.setSelected(false);
+									
+								housainiusername.clear();
+								housainipassword.clear();
+								makepasswordchangeablecheckbox.setSelected(false); makeusernamechangeablecheckbox.setSelected(false); makeaccountdeletablecheckbox.setSelected(false);
 							} else {
 								accerrorlabel.setFill(Color.RED);
 								accerrorlabel.setText("Another account exists with that name");
-								animateboop(accerrorlabel);
+								AnimationHandler.animateboop(accerrorlabel);
 								sleep(5000);
 								accerrorlabel.setFill(Color.BLACK);
 								accerrorlabel.setText("");
@@ -737,7 +721,7 @@ public class Controller extends EncryptionObj {
 									connectionstmt.executeUpdate("UPDATE hpmgeneralsettings SET adminpass = '" + EncAdminPassword + "';");
 								
 									accerrorlabel.setText("Admin Password Set");
-									animateboop(accerrorlabel);
+									AnimationHandler.animateboop(accerrorlabel);
 									sleep(5000);
 									accerrorlabel.setText("");
 									
@@ -760,7 +744,7 @@ public class Controller extends EncryptionObj {
 								} else if(!rs.getString("adminpass").equals(EncryptionObj.EncryptFuncHOUSAINIPASS(housainipassword.getText(), EncryptionObj.hashKey(housainipassword.getText())))) {
 									accerrorlabel.setFill(Color.RED);
 									accerrorlabel.setText("Incorrect: Wait some time and try again");
-									animateboop(accerrorlabel);
+									AnimationHandler.animateboop(accerrorlabel);
 									createpassbutton.setDisable(true);
 									sleep(5000);
 									createpassbutton.setDisable(false);
@@ -845,69 +829,35 @@ public class Controller extends EncryptionObj {
 		}
 	}
 	
-	//DATABASE: manual db backup
-	public void localdbbackup(ActionEvent e) {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Back up Database");
-        
-        File file = fileChooser.showSaveDialog((Stage)((Node)e.getSource()).getScene().getWindow());
-        if (file != null) {
-            backupDatabase("accdb", file.getAbsolutePath());
-        }
-    }
-    
-	//DATABASE: specify automatic db backup location
-    public void automaticdbbackup(ActionEvent e) {
-    	
-    	try {
-			DirectoryChooser directoryChooser = new DirectoryChooser();
-	        directoryChooser.setTitle("Automatic Database Backup Location");
-	        File filelocation = directoryChooser.showDialog((Stage)((Node)e.getSource()).getScene().getWindow());
-			
-			boolean createnewuser = true;
-	        connectionstmt.executeUpdate("UPDATE hpmgeneralsettings SET databasebackupfilelocation = '" + filelocation.getAbsolutePath() + "' WHERE primark = 1;");
-		} catch (SQLException sqlE) {
-			sqlE.printStackTrace();
-		}
-		
-    }
-	
-    //DATABASE: allow automatically backing up db every time application closes
+	//DATABASE: allow automatically backing up db every time application closes
 	public void allowautomaticdbbackup(ActionEvent e) {
-		try {
-			if(allowautodbbackup.isSelected()) {
-				connectionstmt.executeUpdate("UPDATE hpmgeneralsettings SET allowautodbbackup = true WHERE primark = 1;");
-			} else {
-				connectionstmt.executeUpdate("UPDATE hpmgeneralsettings SET allowautodbbackup = false WHERE primark = 1;");
+				try {
+					if(allowautodbbackup.isSelected()) {
+						connectionstmt.executeUpdate("UPDATE hpmgeneralsettings SET allowautodbbackup = true WHERE primark = 1;");
+					} else {
+						connectionstmt.executeUpdate("UPDATE hpmgeneralsettings SET allowautodbbackup = false WHERE primark = 1;");
+					}
+				} catch (SQLException e1) {
+					e1.printStackTrace();
+				}
+		    	
 			}
-		} catch (SQLException e1) {
-			e1.printStackTrace();
-		}
-    	
+	
+	//DATABASE: Refers to the other Method in the DatabaseFileHandler class
+	public void localdbbackupController(ActionEvent e) {
+		DatabaseFileHandler.localdbbackup(e);
+	}
+		
+	//DATABASE: Refers to the other Method in the DatabaseFileHandler class
+	public void automaticdbbackupController(ActionEvent e) {
+		DatabaseFileHandler.automaticdbbackup(e);
+	}
+		
+	//DATABASE: Refers to the other Method in the DatabaseFileHandler class
+	public void dbrestoreController(ActionEvent e) {
+		DatabaseFileHandler.dbrestore(e);
 	}
 	
-	//DATABASE: restore an old backup for a database
-	public void dbrestore(ActionEvent e) throws IOException {
-		
-		FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Select Backup Database File");
-        
-        File selectedFile = fileChooser.showOpenDialog((Stage)((Node)e.getSource()).getScene().getWindow());
-        if (selectedFile != null) {
-            String originalDbPath = null;
-			try {originalDbPath = getDatabasePath(connectionatt);} catch (SQLException e1) { e1.printStackTrace(); }
-            String backupDbPath = selectedFile.getAbsolutePath();
-
-            try {
-                restoreBackup(backupDbPath, originalDbPath);
-                System.out.println("Backup restored successfully.");
-            } catch (IOException q) {
-                System.err.println("Error restoring backup: " + q.getMessage());
-                q.printStackTrace();
-            }
-        }
-	}
-    
 	//log out of current account and return back to the login screen
 	public void logout(ActionEvent e) throws SQLException {
 		islocalacc = false;
@@ -936,11 +886,11 @@ public class Controller extends EncryptionObj {
 		if(servicenamefield.getText() == null || servicenamefield.getText().isEmpty() || usernamefield.getText() == null || usernamefield.getText().isEmpty() || passwordfield.getText() == null || passwordfield.getText().isEmpty() ) {
 			
 			//alerting user if a field is empty
-			if(servicenamefield.getText() == null || servicenamefield.getText().isEmpty()) animateshake(servicenamefield);
+			if(servicenamefield.getText() == null || servicenamefield.getText().isEmpty()) AnimationHandler.animateshake(servicenamefield);
 			else servicenamefield.setStyle("-fx-text-box-border: #33c6ff; -fx-focus-color: #33c6ff;");
-			if(usernamefield.getText() == null || usernamefield.getText().isEmpty()) animateshake(usernamefield);
+			if(usernamefield.getText() == null || usernamefield.getText().isEmpty()) AnimationHandler.animateshake(usernamefield);
 			else usernamefield.setStyle("-fx-text-box-border: #33c6ff; -fx-focus-color: #33c6ff;");
-			if(passwordfield.getText() == null || passwordfield.getText().isEmpty()) animateshake(passwordfield);
+			if(passwordfield.getText() == null || passwordfield.getText().isEmpty()) AnimationHandler.animateshake(passwordfield);
 			else passwordfield.setStyle("-fx-text-box-border: #33c6ff; -fx-focus-color: #33c6ff;");
 			errortext.setText("Field(s) cannot be empty!");
 		
@@ -1409,7 +1359,7 @@ public class Controller extends EncryptionObj {
 						scrollpanewithtextf.setDisable(false);
 						
 						try {showaccounts();} catch (NoSuchAlgorithmException | IOException nsa_ioE) {nsa_ioE.printStackTrace();}
-						animateboop(accwarning);
+						AnimationHandler.animateboop(accwarning);
 						}
 					});
 					
@@ -1680,7 +1630,7 @@ public class Controller extends EncryptionObj {
 				temp = temp2;
 			}
 			statustext.setText("Password has been Updated!");
-			animateboop(statustext);
+			AnimationHandler.animateboop(statustext);
 			statustext.setVisible(true);
 			housainioldpassword.setText("");
 			housaininewpassword.setText("");
@@ -1692,9 +1642,9 @@ public class Controller extends EncryptionObj {
 	}.start();
 	} else {
 		if(housaininewpassword.getText().isEmpty() || housaininewpassword.getText() == null)
-			animateshake(housaininewpassword);
+			AnimationHandler.animateshake(housaininewpassword);
 		else
-			animateshake(housainioldpassword);
+			AnimationHandler.animateshake(housainioldpassword);
 	}
 	}
 	
@@ -1749,7 +1699,7 @@ public class Controller extends EncryptionObj {
 						}
 						
 						statustext.setText("Username has been Updated!");
-						animateboop(statustext);
+						AnimationHandler.animateboop(statustext);
 						statustext.setVisible(true);
 						currentusername = housaininewpassword.getText();
 						housaininewpassword.setText("");
@@ -1764,7 +1714,7 @@ public class Controller extends EncryptionObj {
 			}
 		}.start();
 		} else {
-				animateshake(housaininewpassword);
+				AnimationHandler.animateshake(housaininewpassword);
 		}
 	}
 	
@@ -1981,164 +1931,32 @@ public class Controller extends EncryptionObj {
 			translate3.play();
 		}
 	
-	public void changewindowsize(ActionEvent e) {
-		
-	}
-	
 	//-------------------------------------- ANIMATIONS & DESIGN ----------------------------------------------------
 	// ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 	//-------------------------------------- ANIMATIONS & DESIGN ----------------------------------------------------
 
-	private void animateshake(Node nameoffield) {
-		TranslateTransition translate = new TranslateTransition();
-		//servicenamefield.setLayoutX(150);
-		nameoffield.setStyle("-fx-text-box-border: #ff0e00; -fx-focus-color: #ff0e00;");
-		translate.setNode(nameoffield);
-		translate.setDuration(Duration.millis(40));
-		translate.setCycleCount(2);
-		translate.setByX(15);
-		translate.setAutoReverse(true);
-		translate.setOnFinished((event) -> {
-			TranslateTransition translate2 = new TranslateTransition();
-			translate2.setNode(nameoffield);
-			translate2.setDuration(Duration.millis(40));
-			translate2.setCycleCount(2);
-			translate2.setByX(-15);
-			translate2.setAutoReverse(true);
-			translate2.setOnFinished((event2) -> {
-				TranslateTransition translate3 = new TranslateTransition();
-				translate3.setNode(nameoffield);
-				translate3.setDuration(Duration.millis(40));
-				translate3.setCycleCount(2);
-				translate3.setByX(15);
-				translate3.setAutoReverse(true);
-				translate3.setOnFinished((event3) -> {
-					TranslateTransition translate4 = new TranslateTransition();
-					translate4.setNode(nameoffield);
-					translate4.setDuration(Duration.millis(40));
-					translate4.setCycleCount(2);
-					translate4.setByX(-15);
-					translate4.setAutoReverse(true);
-					translate4.play();
-				});
-				translate3.play();
-			});
-			translate2.play();
-		});
-		translate.play();
+	public void SERVICENAMEFIELD_onhoveranimateController() {
+		AnimationHandler.onhoveranimate(servicenamefield, servicenametext);
 	}
 	
-	public void animatescale(Node nameoffield, float amount) {
-		ScaleTransition scale = new ScaleTransition();
-		scale.setNode(nameoffield);
-		scale.setDuration(Duration.millis(300));
-		//scale.setCycleCount(2);
-		scale.setToX(amount);
-		scale.setToY(amount);
-		scale.setAutoReverse(true);
-		scale.play();
-		}
-	
-	private void animateboop(Node node) {
-		ScaleTransition scalet = new ScaleTransition();
-    	scalet.setNode(node);
-		scalet.setToX(1.3);
-		scalet.setToY(1.3);
-		scalet.setDuration(Duration.millis(60));
-		scalet.setOnFinished((event) -> {
-			ScaleTransition scalet2 = new ScaleTransition();
-			scalet2.setNode(node);
-			scalet2.setToX(1);
-			scalet2.setToY(1);
-			scalet2.setDuration(Duration.millis(60));
-			scalet2.play();
-		});
-		scalet.play();
+	public void SERVICENAMEFIELD_onhoverexitanimateController() {
+		AnimationHandler.onhoverexitanimate(servicenamefield, servicenametext);
 	}
 	
-	public void SERVICENAMEFIELD_onhoveranimate() {
-		animatescale(servicenamefield, 1.25f);
-		TranslateTransition translate4 = new TranslateTransition();
-		translate4.setNode(servicenametext);
-		translate4.setDuration(Duration.millis(200));
-		translate4.setToY(-40);
-		translate4.play();
+	public void USERNAMEFIELD_onhoveranimateController() {
+		AnimationHandler.onhoveranimate(usernamefield, usernametext);
 	}
 	
-	public void SERVICENAMEFIELD_onhoverexitanimate() {
-		animatescale(servicenamefield, 1f);
-		TranslateTransition translate5 = new TranslateTransition();
-		translate5.setNode(servicenametext);
-		translate5.setDuration(Duration.millis(200));
-		translate5.setToY(0);
-		translate5.play();
+	public void USERNAMEFIELD_onhoverexitanimateController() {
+		AnimationHandler.onhoverexitanimate(usernamefield, usernametext);
 	}
 	
-	public void USERNAMEFIELD_onhoveranimate() {
-		animatescale(usernamefield, 1.25f);
-		TranslateTransition translate6 = new TranslateTransition();
-		translate6.setNode(usernametext);
-		translate6.setDuration(Duration.millis(200));
-		translate6.setToY(-40);
-		translate6.play();
+	public void PASSWORDFIELD_onhoveranimateController() {
+		AnimationHandler.onhoveranimate(passwordfield, passwordtext);
 	}
 	
-	public void USERNAMEFIELD_onhoverexitanimate() {
-		animatescale(usernamefield, 1f);
-		TranslateTransition translate7 = new TranslateTransition();
-		translate7.setNode(usernametext);
-		translate7.setDuration(Duration.millis(200));
-		translate7.setToY(0);
-		translate7.play();
-	}
-	
-	public void PASSWORDFIELD_onhoveranimate() {
-		animatescale(passwordfield, 1.25f);
-		TranslateTransition translate8 = new TranslateTransition();
-		translate8.setNode(passwordtext);
-		translate8.setDuration(Duration.millis(200));
-		translate8.setToY(-38);
-		translate8.play();
-	}
-	
-	public void PASSWORDFIELD_onhoverexitanimate() {
-		
-		animatescale(passwordfield, 1f);
-		TranslateTransition translate9 = new TranslateTransition();
-		translate9.setNode(passwordtext);
-		translate9.setDuration(Duration.millis(200));
-		translate9.setToY(0);
-		translate9.play();
-	}
-	
-	public void PASSWORDSTRENGTHPROGRESSBAR_onhoveranimate() {
-		/*animatescale(passwordstrengthprogressbar, 1.05f); //84
-		passwordstrengthpane.setLayoutY(44);
-		TranslateTransition translate = new TranslateTransition();
-		translate.setNode(passwordstrengthpane);
-		translate.setDuration(Duration.millis(70));
-		translate.setToY(84);
-		translate.play();*/
-	}
-	
-	public void PASSWORDSTRENGTHPROGRESSBAR_onhoverexitanimate() {
-		animatescale(passwordstrengthprogressbar, 1f);
-	}
-
-	public void createacctext_ONMOUSEHOVER() {
-		createacctext.setFill(Color.AQUA);
-	}
-	
-	public void createacctext_ONMOUSEEXIT() {
-		createacctext.setFill(new Color(0.3843, 0.4627, 0.9882, 1.0));
-	}
-	
-	public void createlocalacctext_ONMOUSEHOVER() {
-		loginwithlocalacctext.setFill(Color.AQUA);
-	}
-	
-	public void createlocalacctext_ONMOUSEEXIT() {
-		loginwithlocalacctext.setFill(new Color(0.3843, 0.4627, 0.9882, 1.0));
+	public void PASSWORDFIELD_onhoverexitanimateController() {
+		AnimationHandler.onhoverexitanimate(passwordfield, passwordtext);
 	}
 
 	//---------------------------------------------- MISCELLANEOUS -------------------------------------------------------
@@ -2150,10 +1968,8 @@ public class Controller extends EncryptionObj {
 		try {
 			
 			connectionatt = DriverManager.getConnection("jdbc:sqlite:accdb");
-			DatabaseMetaData meta = connectionatt.getMetaData();
-			System.out.println("The driver name is " + meta.getDriverName());
 			connectionstmt = connectionatt.createStatement();
-			File f = new File(getDatabasePath(connectionatt));
+			File f = new File(DatabaseFileHandler.getDatabasePath(connectionatt));
 			
 			//ProcessBuilder processBuilder = new ProcessBuilder("chown", "root:root", f.toPath().toString());
             //processBuilder.inheritIO(); // To see any output/errors from the command
@@ -2245,83 +2061,6 @@ public class Controller extends EncryptionObj {
 		writer = new FileWriter(filename, appendmode);
 		writer.append(input + '\n');
 		writer.close();
-	}
-	
-	private void backupDatabase(String sourcePath, String destPath) {
-        File sourceFile = new File(sourcePath);
-        File destFile = new File(destPath);
-
-        try (FileChannel sourceChannel = new FileInputStream(sourceFile).getChannel();
-             FileChannel destChannel = new FileOutputStream(destFile).getChannel()) {
-            destChannel.transferFrom(sourceChannel, 0, sourceChannel.size());
-            System.out.println("Database backup successful!");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-	
-	private static void backupDatabasestatic(String sourcePath, String destPath) {
-		
-		LocalTime currenttimeforbackup = LocalTime.now();
-		DateTimeFormatter customFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
-        String formattedTimeCustom = currenttimeforbackup.format(customFormatter);
-        
-		String filename = File.separatorChar + "accdb BACKUP - " + LocalDate.now() + " - " + formattedTimeCustom;
-        File sourceFile = new File(sourcePath);
-        File destFile = new File(destPath + filename);
-        
-        
-
-        try (FileChannel sourceChannel = new FileInputStream(sourceFile).getChannel();
-             FileChannel destChannel = new FileOutputStream(destFile).getChannel()) {
-            destChannel.transferFrom(sourceChannel, 0, sourceChannel.size());
-            System.out.println("Database backup successful!");
-        } catch (IOException e) {
-        	e.printStackTrace();
-        }
-    }
-
-	public void restoreBackup(String backupDbPath, String originalDbPath) throws IOException {
-        Path backupDbFile = new File(backupDbPath).toPath();
-        Path originalDbFile = new File(originalDbPath).toPath();
-
-        // Ensure the backup file exists
-        if (!Files.exists(backupDbFile)) {
-            throw new IOException("Backup database file does not exist: " + backupDbPath);
-        }
-
-        try {
-			connectionstmt.close();
-			connectionatt.close();
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-        
-
-        // Replace the original database file with the backup
-        Files.copy(backupDbFile, originalDbFile, StandardCopyOption.REPLACE_EXISTING);
-
-        // Optional: Delete the backup file if needed
-        // Files.delete(backupDbFile);
-    }
-	
-	public static String getDatabasePath(Connection conn) throws SQLException {
-        String databasePath = null;
-        String sql = "PRAGMA database_list";
-
-        try (Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
-            while (rs.next()) {
-                String name = rs.getString("name");
-                String path = rs.getString("file");
-                if ("main".equals(name)) {
-                    databasePath = path;
-                    break;
-                }
-            }
-        }
-        
-        return databasePath; 
 	}
 	
 	private void displaycreateaccanddbadminacc() {
