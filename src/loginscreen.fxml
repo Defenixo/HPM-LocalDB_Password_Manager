@@ -24,7 +24,7 @@
                   <Glow level="1.0" />
                </effect>
             </Pane>
-            <Text fx:id="passindicator" layoutY="158.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Log in with a Housaini Account " textAlignment="CENTER" wrappingWidth="601.0">
+            <Text fx:id="passindicator" disable="true" layoutY="158.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Log in with a Housaini Account " textAlignment="CENTER" wrappingWidth="601.0">
                <font>
                   <Font name="System Bold" size="24.0" />
                </font>
@@ -34,7 +34,7 @@
                   <ColorAdjust brightness="-1.0" contrast="1.0" hue="-1.0" saturation="-1.0" />
                </effect>
             </ProgressIndicator>
-            <Button fx:id="createpassbutton" layoutX="167.0" layoutY="281.0" mnemonicParsing="false" onAction="#loginorcreatePassSeperate" prefHeight="33.0" prefWidth="262.0" text="Log in">
+            <Button fx:id="createpassbutton" disable="true" layoutX="167.0" layoutY="281.0" mnemonicParsing="false" onAction="#loginorcreatePassSeperate" prefHeight="33.0" prefWidth="262.0" text="Log in">
                <font>
                   <Font size="19.0" />
                </font>
@@ -65,18 +65,18 @@
                   </LinearGradient>
                </fill>
             </Text>
-            <TextField fx:id="housainiusername" layoutX="150.0" layoutY="180.0" prefHeight="26.0" prefWidth="299.0" promptText="Username">
+            <TextField fx:id="housainiusername" disable="true" layoutX="150.0" layoutY="180.0" prefHeight="26.0" prefWidth="299.0" promptText="Username">
                <font>
                   <Font name="System Bold" size="19.0" />
                </font>
             </TextField>
-            <Text fx:id="createacctext" fill="#6276fc" layoutY="360.0" onMouseClicked="#signuptoaccTEXT" strokeType="OUTSIDE" strokeWidth="0.0" text="Create Housaini Account">
+            <Text fx:id="createacctext" disable="true" fill="#6276fc" layoutY="360.0" onMouseClicked="#signuptoaccTEXT" strokeType="OUTSIDE" strokeWidth="0.0" text="Create Housaini Account">
                <font>
                   <Font name="System Bold" size="19.0" />
                </font>
             </Text>
             <Line endX="500.0" layoutX="98.0" layoutY="117.0" startX="-100.0" />
-            <PasswordField fx:id="housainipassword" layoutX="149.0" layoutY="232.0" prefHeight="40.0" prefWidth="299.0" promptText="Password">
+            <PasswordField fx:id="housainipassword" disable="true" layoutX="149.0" layoutY="232.0" prefHeight="40.0" prefWidth="299.0" promptText="Password">
                <font>
                   <Font name="System Bold" size="19.0" />
                </font>
