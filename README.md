@@ -26,13 +26,13 @@
 
 ###  Personal Note
 
-This is a passion project I created a few years ago simply to learn Java and JavaFX. This project tested my GUI skills, backend programming skills, and my patience. I think I came out of it a better programmer and ultimately I'm glad to have made this project. I will not be updating this project further.
-
+This is a passion project I created simply to learn Java and JavaFX. This project tested my GUI skills, backend programming skills, and my patience. I think I came out of it a better programmer and ultimately I'm glad to have made this project.
+I created this project a few years ago, about 2023/2024, alongside working in game development with Unity. Since then, I've specialized in gamedev, but this remains an artifact that demonstrated my passion for programming.
 I decided to upload it to Github in case anyone wants to explore the code, improve it, or fork it.
 
 ### ⚠ Security Notice
 
-This is an **open-source passion project**. While it uses encryption and local storage, it should **not be treated as a fully secure alternative** to professional password managers. Since the source code is publicly available, anyone can analyze its methods and potentially reverse-engineer stored data.
+This is an **open-source passion project**. While it uses encryption and local storage, it should **not be treated as a fully secure alternative** to professional password managers. Since the source code is publicly available, anyone can analyze its methods and potentially reverse-engineer stored data. I may not update this project further.
 If you plan to use this application, please keep that in mind.
 
 ###  License Information
